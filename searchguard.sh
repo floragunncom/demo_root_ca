@@ -70,13 +70,13 @@ do_install() {
   
   echo "Generate certificates"
   
-  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PUBHOST" "$SG_PUBHOST" changeit "ca pass" > /dev/null 2>&1
+  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PUBHOST" "$SG_PUBHOST" changeit "ca pass" #> /dev/null 2>&1
   check_ret
-  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PRIVHOST" "$SG_PRIVHOST" changeit "ca pass" > /dev/null 2>&1
+  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PRIVHOST" "$SG_PRIVHOST" changeit "ca pass" #> /dev/null 2>&1
   check_ret
-  ./gen_client_node_cert.sh "$ORG_NAME" "CN=user" changeit "ca pass" > /dev/null 2>&1
+  ./gen_client_node_cert.sh "$ORG_NAME" "CN=user" changeit "ca pass" #> /dev/null 2>&1
   check_ret
-  ./gen_client_node_cert.sh "$ORG_NAME" "CN=sgadmin" changeit "ca pass" > /dev/null 2>&1
+  ./gen_client_node_cert.sh "$ORG_NAME" "CN=sgadmin" changeit "ca pass" #> /dev/null 2>&1
   check_ret
   ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=topbeat" $SG_PUBHOST topbeat "ca pass"  #> /dev/null 2>&1
   check_ret
@@ -240,10 +240,6 @@ check_prerequisites() {
   ########## end Oracle 8 Java
 
   apt-get -yqq install ntp ntpdate haveged libssl-dev autoconf libtool build-essential libffi6 libffi-dev git curl wget openssl libapr1 iputils-ping dnsutils host netcat telnet > /dev/null 2>&1
-
-  wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-  echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-5.x.list
-  apt-get -yqq update
   apt-get -yqq install unzip awscli docker.io curl git jq ansible apt-transport-https
 
   if ! check_cmd docker; then
