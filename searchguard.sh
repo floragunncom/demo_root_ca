@@ -15,10 +15,13 @@ do_install() {
   
   #GITHUB_URL="$(aws cloudformation describe-stacks --stack-name $STACKNAME  --region $REGION | jq '.Stacks[0].Parameters | map(select (.ParameterKey == "GithubUrl" ))[0].ParameterValue' | tr -d '"' )"
   
-  systemctl stop kibana.service
-  systemctl stop metricbeat.service
-  systemctl stop elasticsearch.service
+  echo "Stopping services"
   
+  systemctl stop kibana.service > /dev/null 2>&1
+  systemctl stop metricbeat.service > /dev/null 2>&1
+  systemctl stop elasticsearch.service > /dev/null 2>&1
+  
+  echo "Install packages"
   
   ES_VERSION=5.0.0
   
@@ -75,9 +78,9 @@ do_install() {
   check_ret
   ./gen_client_node_cert.sh "$ORG_NAME" "CN=sgadmin" changeit "ca pass" > /dev/null 2>&1
   check_ret
-  ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=topbeat" $SG_PUBHOST topbeat "ca pass"  > /dev/null 2>&1
+  ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=topbeat" $SG_PUBHOST topbeat "ca pass"  #> /dev/null 2>&1
   check_ret
-  ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=kibana" $SG_PUBHOST kibana "ca pass"  > /dev/null 2>&1
+  ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=kibana" $SG_PUBHOST kibana "ca pass"  ##> /dev/null 2>&1
   check_ret
 
   cp *.jks $ES_CONF/
