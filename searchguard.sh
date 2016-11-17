@@ -2,7 +2,7 @@
 #set -x
 
 post_slack() {
-   curl -X POST --data-urlencode 'payload={"channel": "#aws_notify", "username": "awsbot", "text": "'"$1"'", "icon_emoji": ":cyclone:"}' $SLACKURL
+   curl -X POST --data-urlencode 'payload={"channel": "#aws_notify", "username": "awsbot", "text": "'"$1"'", "icon_emoji": ":cyclone:"}' $SLACKURL > /dev/null 2>&1
 }
 
 do_install() {
@@ -27,19 +27,19 @@ do_install() {
     check_ret
   fi
   
-  dpkg --force-all -i elasticsearch-$ES_VERSION.deb
+  dpkg --force-all -i elasticsearch-$ES_VERSION.deb > /dev/null
   check_ret
   
   wget https://artifacts.elastic.co/downloads/beats/metricbeat/metricbeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
   check_ret
   
-  dpkg --force-all -i metricbeat-$ES_VERSION-amd64.deb
+  dpkg --force-all -i metricbeat-$ES_VERSION-amd64.deb > /dev/null
   check_ret
   
   wget https://artifacts.elastic.co/downloads/kibana/kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
   check_ret
   
-  dpkg --force-all -i kibana-$ES_VERSION-amd64.deb
+  dpkg --force-all -i kibana-$ES_VERSION-amd64.deb > /dev/null
   check_ret
   
   NETTY_NATIVE_VERSION=1.1.33.Fork23
@@ -49,7 +49,7 @@ do_install() {
   ES_LOG=/var/log/elasticsearch
   ES_PLUGINS=/usr/share/elasticsearch/plugins
   SG_VERSION=5.0.0-8
-  ORG_NAME = "Example DSG Inc. 1.0"
+  ORG_NAME="Example DSG Inc. 1.0"
   
   echo "SG_PUBHOST: $SG_PUBHOST"
   echo "SG_PRIVHOST: $SG_PRIVHOST"
