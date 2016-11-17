@@ -69,6 +69,7 @@ do_install() {
   git pull > /dev/null 2>&1
   
   echo "Generate certificates"
+  cp truststore.jks truststore.jks.orig
   rm -rf *.jks *.p12 *.pem *.csr *.key
   
   ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PUBHOST" "$SG_PUBHOST" changeit "ca pass" > /dev/null 2>&1
@@ -83,6 +84,8 @@ do_install() {
   check_ret
   ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=kibana" $SG_PUBHOST kibana "ca pass"  > /dev/null 2>&1
   check_ret
+
+  cp truststore.jks.orig truststore.jks
 
   cp *.jks $ES_CONF/
   cp *.p12 $ES_CONF/
