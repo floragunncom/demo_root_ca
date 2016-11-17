@@ -71,17 +71,17 @@ do_install() {
   echo "Generate certificates"
   rm -rf *.jks *.p12 *.pem *.csr *.key
   
-  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PUBHOST" "$SG_PUBHOST" changeit "ca pass" #> /dev/null 2>&1
+  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PUBHOST" "$SG_PUBHOST" changeit "ca pass" > /dev/null 2>&1
   check_ret
-  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PRIVHOST" "$SG_PRIVHOST" changeit "ca pass" #> /dev/null 2>&1
+  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PRIVHOST" "$SG_PRIVHOST" changeit "ca pass" > /dev/null 2>&1
   check_ret
-  ./gen_client_node_cert.sh "$ORG_NAME" "CN=user" changeit "ca pass" #> /dev/null 2>&1
+  ./gen_client_node_cert.sh "$ORG_NAME" "CN=user" changeit "ca pass" > /dev/null 2>&1
   check_ret
-  ./gen_client_node_cert.sh "$ORG_NAME" "CN=sgadmin" changeit "ca pass" #> /dev/null 2>&1
+  ./gen_client_node_cert.sh "$ORG_NAME" "CN=sgadmin" changeit "ca pass" > /dev/null 2>&1
   check_ret
-  ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=topbeat" $SG_PUBHOST topbeat "ca pass"  #> /dev/null 2>&1
+  ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=topbeat" $SG_PUBHOST topbeat "ca pass"  > /dev/null 2>&1
   check_ret
-  ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=kibana" $SG_PUBHOST kibana "ca pass"  ##> /dev/null 2>&1
+  ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=kibana" $SG_PUBHOST kibana "ca pass"  > /dev/null 2>&1
   check_ret
 
   cp *.jks $ES_CONF/
