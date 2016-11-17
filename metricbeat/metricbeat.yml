@@ -1,0 +1,25 @@
+output.elasticsearch:
+  #workaround for 5.0.0 where template is missing
+  template.enabled: false
+  username: logstash
+  password: logstash
+  protocol: https
+  hosts: ["RPLC_HOST"]
+  ssl.certificate_authorities:
+    - "/etc/elasticsearch/chain-ca.pem"
+  ssl.certificate: "/etc/elasticsearch/topbeat.crt.pem"
+  ssl.key: "/etc/elasticsearch/topbeat.key"
+
+metricbeat.modules:
+- module: system
+  metricsets:
+    - cpu
+    - load
+    - memory
+    - process
+  enabled: true
+  period: 10s
+  processes: ['.*']
+
+#output.console:
+#  pretty: true
