@@ -30,19 +30,19 @@ do_install() {
     check_ret
   fi
   
-  dpkg --force-all -i elasticsearch-$ES_VERSION.deb > /dev/null
+  dpkg --force-all -i elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
   check_ret
   
   wget https://artifacts.elastic.co/downloads/beats/metricbeat/metricbeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
   check_ret
   
-  dpkg --force-all -i metricbeat-$ES_VERSION-amd64.deb > /dev/null
+  dpkg --force-all -i metricbeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
   check_ret
   
   wget https://artifacts.elastic.co/downloads/kibana/kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
   check_ret
   
-  dpkg --force-all -i kibana-$ES_VERSION-amd64.deb > /dev/null
+  dpkg --force-all -i kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
   check_ret
   
   NETTY_NATIVE_VERSION=1.1.33.Fork23
@@ -69,6 +69,7 @@ do_install() {
   git pull > /dev/null 2>&1
   
   echo "Generate certificates"
+  rm -rf *.jks *.p12 *.pem *.csr *.key
   
   ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PUBHOST" "$SG_PUBHOST" changeit "ca pass" #> /dev/null 2>&1
   check_ret
@@ -84,6 +85,7 @@ do_install() {
   check_ret
 
   cp *.jks $ES_CONF/
+  cp *.p12 $ES_CONF/
   cp *.pem $ES_CONF/
   cp *.key $ES_CONF/
   cp ca/*.pem $ES_CONF/
