@@ -65,6 +65,8 @@ do_install() {
   cd demo_root_ca
   git pull > /dev/null 2>&1
   
+  echo "Generate certificates"
+  
   ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PUBHOST" "$SG_PUBHOST" changeit "ca pass" > /dev/null 2>&1
   check_ret
   ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PRIVHOST" "$SG_PRIVHOST" changeit "ca pass" > /dev/null 2>&1
@@ -94,7 +96,9 @@ do_install() {
   cd - > /dev/null 2>&1
   
   cd $ES_PLUGINS/search-guard-5
-   
+
+  echo "Download modules"
+
   wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-authbackend-ldap&v=5.0-4" --content-disposition  > /dev/null 2>&1
   check_ret
   wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-auditlog&v=5.0-3" --content-disposition  > /dev/null 2>&1
