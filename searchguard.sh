@@ -96,7 +96,7 @@ do_install() {
   #chown -R elasticsearch:elasticsearch $ES_CONF
   #chown -R elasticsearch:elasticsearch $ES_CONF
   
-  chmod -R 644 $ES_CONF
+  chmod -R 755 $ES_CONF
   
   if [ ! -f "netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar" ]; then
     echo "Download netty native"
