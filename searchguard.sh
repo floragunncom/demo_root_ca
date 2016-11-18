@@ -96,11 +96,11 @@ do_install() {
   #chown -R elasticsearch:elasticsearch $ES_CONF
   chown -R elasticsearch:elasticsearch $ES_CONF
   
-  chmod -R 644 $ES_CONF
+  chmod -R 755 $ES_CONF
   
   if [ ! -f "netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar" ]; then
     echo "Download netty native"
-    wget -O $ES_PLUGINS/search-guard-5/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://search.maven.org/remotecontent?filepath=io/netty/netty-tcnative/$NETTY_NATIVE_VERSION/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar
+    wget -O $ES_PLUGINS/search-guard-5/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://search.maven.org/remotecontent?filepath=io/netty/netty-tcnative/$NETTY_NATIVE_VERSION/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar > /dev/null 2>&1
     check_ret
   fi
   
