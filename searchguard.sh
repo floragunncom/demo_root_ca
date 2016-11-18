@@ -23,7 +23,7 @@ do_install() {
   
   echo "Install packages"
   
-  ES_VERSION=5.0.0
+  ES_VERSION=5.0.1
   
   if [ ! -f "elasticsearch-$ES_VERSION.deb" ]; then
     wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
@@ -51,7 +51,7 @@ do_install() {
   ES_CONF=/etc/elasticsearch
   ES_LOG=/var/log/elasticsearch
   ES_PLUGINS=/usr/share/elasticsearch/plugins
-  SG_VERSION=5.0.0-8
+  SG_VERSION=$ES_VERSION-8
   ORG_NAME="Example DSG Inc. 1.0"
   
   echo "SG_PUBHOST: $SG_PUBHOST"
@@ -93,8 +93,10 @@ do_install() {
   cp *.key $ES_CONF/
   cp ca/*.pem $ES_CONF/
 
-  chown elasticsearch:elasticsearch $ES_CONF/*
-  chmod 644 $ES_CONF/*
+  #chown -R elasticsearch:elasticsearch $ES_CONF
+  #chown -R elasticsearch:elasticsearch $ES_CONF
+  
+  chmod -R 644 $ES_CONF
   
   if [ ! -f "netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar" ]; then
     echo "Download netty native"
