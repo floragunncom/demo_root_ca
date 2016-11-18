@@ -60,9 +60,9 @@ do_install() {
   $ES_BIN/elasticsearch-plugin remove discovery-ec2 > /dev/null 2>&1
   $ES_BIN/elasticsearch-plugin remove search-guard-5 > /dev/null 2>&1
   
-  $ES_BIN/elasticsearch-plugin install -b discovery-ec2
+  $ES_BIN/elasticsearch-plugin install -b discovery-ec2 > /dev/null 
   check_ret
-  $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-5:$SG_VERSION
+  $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-5:$SG_VERSION > /dev/null 
   check_ret
   
   cd /demo_root_ca
@@ -94,9 +94,9 @@ do_install() {
   cp ca/*.pem $ES_CONF/
 
   #chown -R elasticsearch:elasticsearch $ES_CONF
-  #chown -R elasticsearch:elasticsearch $ES_CONF
+  chown -R elasticsearch:elasticsearch $ES_CONF
   
-  chmod -R 755 $ES_CONF
+  chmod -R 644 $ES_CONF
   
   if [ ! -f "netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar" ]; then
     echo "Download netty native"
