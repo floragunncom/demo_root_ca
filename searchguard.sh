@@ -65,7 +65,7 @@ do_install() {
   $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-5:$SG_VERSION
   check_ret
   
-  cd demo_root_ca
+  cd /demo_root_ca
   git pull > /dev/null 2>&1
   
   echo "Generate certificates"
@@ -192,18 +192,18 @@ do_install() {
   post_slack "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
   
   chmod +x $ES_PLUGINS/search-guard-5/tools/sgadmin.sh
-  $ES_PLUGINS/search-guard-5/tools/sgadmin.sh -cd $ES_PLUGINS/search-guard-5/sgconfig -h $SG_PRIVHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=$SG_PRIVHOST-keystore.jks
+  $ES_PLUGINS/search-guard-5/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PRIVHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=$SG_PRIVHOST-keystore.jks
   check_ret
   post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
 
-  cat demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
+  cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
     
   /bin/systemctl enable kibana.service
   check_ret
   systemctl start kibana.service  
   check_ret
   
-  cat demo_root_ca/metricbeat/metricbeat.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/metricbeat/metricbeat.yml
+  cat /demo_root_ca/metricbeat/metricbeat.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/metricbeat/metricbeat.yml
 
   /bin/systemctl enable metricbeat.service
   check_ret
