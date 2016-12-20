@@ -135,7 +135,7 @@ do_install() {
   echo "http.host: $SG_PUBHOST" >> $ES_CONF/elasticsearch.yml
   echo "http.port: 9200" >> $ES_CONF/elasticsearch.yml
   echo "http.cors.enabled: true" >> $ES_CONF/elasticsearch.yml
-  #echo "http.cors.allow-origin: *" >> $ES_CONF/elasticsearch.yml
+  echo 'http.cors.allow-origin: "*"' >> $ES_CONF/elasticsearch.yml
   echo "cloud.aws.region: $REGION" >> $ES_CONF/elasticsearch.yml
   
   echo "cluster.routing.allocation.disk.watermark.high: 10mb" >> $ES_CONF/elasticsearch.yml
@@ -229,6 +229,24 @@ do_install() {
   check_ret
   
   post_slack "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
+  
+  apt-get -yqq update
+  check_ret
+  apt-get -yqq install nodejs npm
+  check_ret
+  
+  git clone git://github.com/mobz/elasticsearch-head.git
+  check_ret
+  cd elasticsearch-head
+  npm install
+  check_ret
+  npm install grunt --save-dev
+  check_ret
+  grunt server &
+  check_ret
+  
+  post_slack "Head on http://$SG_PUBHOST:9010"
+  
 }
 
 
