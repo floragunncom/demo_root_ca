@@ -227,6 +227,8 @@ do_install() {
   check_ret
   systemctl start metricbeat.service
   check_ret
+  
+  post_slack "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
 }
 
 
