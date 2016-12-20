@@ -229,23 +229,14 @@ do_install() {
   check_ret
   
   post_slack "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
+    
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" > health
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" > authinfo
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" > sslinfo
   
-  apt-get -yqq update
-  check_ret
-  apt-get -yqq install nodejs npm
-  check_ret
-  
-  git clone git://github.com/mobz/elasticsearch-head.git
-  check_ret
-  cd elasticsearch-head
-  npm install
-  check_ret
-  npm install grunt --save-dev
-  check_ret
-  grunt server &
-  check_ret
-  
-  post_slack "Head on http://$SG_PUBHOST:9010"
+  post_slack "$(cat authinfo)"
+  post_slack "$(cat sslinfo)"
+  post_slack "$(cat health)"
   
 }
 
