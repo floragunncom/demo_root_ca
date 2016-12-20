@@ -198,14 +198,14 @@ do_install() {
   check_ret
   post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
   
-  curl -XPUT -k -u admin:admin 'https://$SG_PUBHOST:9200/twitter/tweet/1?pretty' -d'
+  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter/tweet/1?pretty" -d'
   {
     "user" : "searchguard",
     "post_date" : "20013-11-15T14:12:12",
     "message" : "rockn roll"
   }'
 
-  curl -XPUT -k -u admin:admin 'https://$SG_PUBHOST:9200/twitter1/tweet/1?pretty' -d'
+  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter1/tweet/1?pretty" -d'
   {
     "user" : "searchguard1",
     "post_date" : "20015-11-15T14:12:12",

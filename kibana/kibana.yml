@@ -92,3 +92,13 @@ logging.quiet: true
 
 # Set this to true to log all events, including system usage information and all requests.
 # logging.verbose: false
+
+# make sense/dev tools work 
+# https://github.com/elastic/kibana/issues/7128
+console.proxyConfig:
+ - match:
+    host: "*"
+    port: "{9200..9202}"
+
+   ssl:
+    ca: "/etc/elasticsearch/root-ca.pem"
