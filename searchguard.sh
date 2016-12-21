@@ -214,7 +214,7 @@ do_install() {
 
   cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
   echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
-  /usr/share/kibana/bin/kibana-plugin install https://files.slack.com/files-pri/T0KUZ3JGN-F3HAHLE6Q/download/searchguard-5.0.2.zip?pub_secret=9f99f0c228
+  /usr/share/kibana/bin/kibana-plugin install https://files.slack.com/files-pri/T0KUZ3JGN-F3JC0QZ38/download/searchguard-kibana-5.0.2.zip?pub_secret=39500fd32d
 
   /bin/systemctl enable kibana.service
   check_ret
