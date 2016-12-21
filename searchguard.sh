@@ -230,13 +230,20 @@ do_install() {
   
   post_slack "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
     
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" > health
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" > authinfo
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" > sslinfo
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" > health 2>&1
+  check_ret
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" > authinfo 2>&1
+  check_ret
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" > sslinfo 2>&1
+  check_ret
   
-  post_slack "$(cat authinfo)"
-  post_slack "$(cat sslinfo)"
-  post_slack "$(cat health)"
+  cat authinfo
+  cat sslinfo
+  cat health
+  
+  post_slack "Authinfo: $(cat authinfo)"
+  post_slack "SSL Info: $(cat sslinfo)"
+  post_slack "Cluster Health: $(cat health)"
   
 }
 
