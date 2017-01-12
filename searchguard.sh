@@ -138,6 +138,28 @@ do_install() {
   echo 'http.cors.allow-origin: "*"' >> $ES_CONF/elasticsearch.yml
   echo "cloud.aws.region: $REGION" >> $ES_CONF/elasticsearch.yml
   
+  if [ "$SG_PRIVHOST" == "10.0.0.6" ]; then
+     # master only
+     echo "node.master: true" >> $ES_CONF/elasticsearch.yml
+     echo "node.data: false" >> $ES_CONF/elasticsearch.yml
+     echo "http.enabled: false" >> $ES_CONF/elasticsearch.yml
+  fi
+  
+  if [ "$SG_PRIVHOST" == "10.0.0.7" ]; then
+     # data only
+     echo "node.master: false" >> $ES_CONF/elasticsearch.yml
+     echo "node.data: true" >> $ES_CONF/elasticsearch.yml
+     echo "http.enabled: false" >> $ES_CONF/elasticsearch.yml
+  fi
+  
+  if [ "$SG_PRIVHOST" == "10.0.0.8" ]; then
+     # coord
+     echo "node.master: false" >> $ES_CONF/elasticsearch.yml
+     echo "node.data: false" >> $ES_CONF/elasticsearch.yml
+  fi
+  
+  echo "node.ingest: false" >> $ES_CONF/elasticsearch.yml
+  
   echo "cluster.routing.allocation.disk.watermark.high: 10mb" >> $ES_CONF/elasticsearch.yml
   echo "cluster.routing.allocation.disk.watermark.low: 10mb" >> $ES_CONF/elasticsearch.yml
   echo "node.name: $SG_PUBHOST" >> $ES_CONF/elasticsearch.yml
@@ -191,59 +213,66 @@ do_install() {
   echo "elasticsearch up"
   sleep 5
   
-  post_slack "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
+  if [ "$SG_PRIVHOST" == "10.0.0.8" ]; then
+  # coord
   
-  chmod +x $ES_PLUGINS/search-guard-5/tools/sgadmin.sh
-  $ES_PLUGINS/search-guard-5/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PRIVHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=$SG_PRIVHOST-keystore.jks
-  check_ret
-  post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
+	  post_slack "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
   
-  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter/tweet/1?pretty" -d'
-  {
-    "user" : "searchguard",
-    "post_date" : "20013-11-15T14:12:12",
-    "message" : "rockn roll"
-  }'
+	  chmod +x $ES_PLUGINS/search-guard-5/tools/sgadmin.sh
+	  $ES_PLUGINS/search-guard-5/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PRIVHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=$SG_PRIVHOST-keystore.jks
+	  check_ret
+	  post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
+  
+  
+  
+	  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter/tweet/1?pretty" -d'
+	  {
+		"user" : "searchguard",
+		"post_date" : "20013-11-15T14:12:12",
+		"message" : "rockn roll"
+	  }'
 
-  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter1/tweet/1?pretty" -d'
-  {
-    "user" : "searchguard1",
-    "post_date" : "20015-11-15T14:12:12",
-    "message" : "rockn roll"
-  }'
+	  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter1/tweet/1?pretty" -d'
+	  {
+		"user" : "searchguard1",
+		"post_date" : "20015-11-15T14:12:12",
+		"message" : "rockn roll"
+	  }'
 
-  cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
-  echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
-  /usr/share/kibana/bin/kibana-plugin install https://files.slack.com/files-pri/T0KUZ3JGN-F3JC0QZ38/download/searchguard-kibana-5.0.2.zip?pub_secret=39500fd32d
+	  cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
+	  echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
+	  /usr/share/kibana/bin/kibana-plugin install https://files.slack.com/files-pri/T0KUZ3JGN-F3JC0QZ38/download/searchguard-kibana-5.0.2.zip?pub_secret=39500fd32d
 
-  /bin/systemctl enable kibana.service
-  check_ret
-  systemctl start kibana.service  
-  check_ret
+	  /bin/systemctl enable kibana.service
+	  check_ret
+	  systemctl start kibana.service  
+	  check_ret
   
-  cat /demo_root_ca/metricbeat/metricbeat.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/metricbeat/metricbeat.yml
+	  cat /demo_root_ca/metricbeat/metricbeat.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/metricbeat/metricbeat.yml
 
-  /bin/systemctl enable metricbeat.service
-  check_ret
-  systemctl start metricbeat.service
-  check_ret
+	  /bin/systemctl enable metricbeat.service
+	  check_ret
+	  systemctl start metricbeat.service
+	  check_ret
   
-  post_slack "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
-    
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" > health 2>&1
-  check_ret
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" > authinfo 2>&1
-  check_ret
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" > sslinfo 2>&1
-  check_ret
+	  post_slack "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
+	
+	  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" > health 2>&1
+	  check_ret
+	  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" > authinfo 2>&1
+	  check_ret
+	  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" > sslinfo 2>&1
+	  check_ret
   
-  cat authinfo
-  cat sslinfo
-  cat health
+	  cat authinfo
+	  cat sslinfo
+	  cat health
   
-  post_slack "Authinfo: $(cat authinfo)"
-  post_slack "SSL Info: $(cat sslinfo)"
-  post_slack "Cluster Health: $(cat health)"
+	  post_slack "Authinfo: $(cat authinfo)"
+	  post_slack "SSL Info: $(cat sslinfo)"
+	  post_slack "Cluster Health: $(cat health)"
+  
+  fi
   
 }
 
