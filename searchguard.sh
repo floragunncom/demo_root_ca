@@ -211,7 +211,7 @@ do_install() {
   done
   
   echo "elasticsearch up"
-  sleep 5
+  sleep 50
   
   if [[ $SG_PRIVHOST == *"10-0-0-8"* ]]; then
   # coord
