@@ -138,21 +138,17 @@ do_install() {
   echo 'http.cors.allow-origin: "*"' >> $ES_CONF/elasticsearch.yml
   echo "cloud.aws.region: $REGION" >> $ES_CONF/elasticsearch.yml
   
-  if [[ $SG_PRIVHOST == *"10-0-0-6"* ]]; then
+  if [[ $SG_PRIVHOST == *"10-0-0-6"* ]] || [[ $SG_PRIVHOST == *"10-0-0-7"* ]] || [[ $SG_PRIVHOST == *"10-0-0-8"* ]]; then
      # master only
      echo "node.master: true" >> $ES_CONF/elasticsearch.yml
      echo "node.data: false" >> $ES_CONF/elasticsearch.yml
      echo "http.enabled: false" >> $ES_CONF/elasticsearch.yml
-  fi
-  
-  if [[ $SG_PRIVHOST == *"10-0-0-7"* ]]; then
+  elif [[ $SG_PRIVHOST == *"10-0-0-9"* ]] || [[ $SG_PRIVHOST == *"10-0-0-10"* ]]; then
      # data only
      echo "node.master: false" >> $ES_CONF/elasticsearch.yml
      echo "node.data: true" >> $ES_CONF/elasticsearch.yml
      echo "http.enabled: false" >> $ES_CONF/elasticsearch.yml
-  fi
-  
-  if [[ $SG_PRIVHOST == *"10-0-0-8"* ]]; then
+  else
      # coord
      echo "node.master: false" >> $ES_CONF/elasticsearch.yml
      echo "node.data: false" >> $ES_CONF/elasticsearch.yml
@@ -211,10 +207,12 @@ do_install() {
   done
   
   echo "elasticsearch up"
-  sleep 50
   
-  if [[ $SG_PRIVHOST == *"10-0-0-8"* ]]; then
+  
+  if [[ $SG_PRIVHOST == *"10-0-0-12"* ]]; then
   # coord
+  
+      sleep 50
   
 	  post_slack "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
   
