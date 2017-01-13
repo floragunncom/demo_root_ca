@@ -54,22 +54,22 @@ do_install() {
   ES_CONF=/etc/elasticsearch
   ES_LOG=/var/log/elasticsearch
   ES_PLUGINS=/usr/share/elasticsearch/plugins
-  SG_VERSION=$ES_VERSION-9
-  SG_SSL_VERSION=$ES_VERSION-19
+  SG_VERSION=$ES_VERSION.9
+  SG_SSL_VERSION=$ES_VERSION.19
   ORG_NAME="Example DSG Inc. 1.0"
   
   echo "SG_PUBHOST: $SG_PUBHOST"
   echo "SG_PRIVHOST: $SG_PRIVHOST"
   
-  $ES_BIN/plugin remove discovery-ec2 > /dev/null 2>&1
+  $ES_BIN/plugin remove cloud-aws > /dev/null 2>&1
   $ES_BIN/plugin remove search-guard-2 > /dev/null 2>&1
   $ES_BIN/plugin remove search-guard-ssl > /dev/null 2>&1
   
-  $ES_BIN/plugin install -b discovery-ec2 > /dev/null 
+  $ES_BIN/plugin install -b cloud-aws > /dev/null 
   check_ret
-  $ES_BIN/plugin install -b com.floragunn:search-guard-2:$SG_VERSION > /dev/null 
+  $ES_BIN/plugin install -b com.floragunn/search-guard-2/$SG_VERSION > /dev/null 
   check_ret
-  $ES_BIN/plugin install -b com.floragunn:search-guard-ssl:$SG_SSL_VERSION > /dev/null 
+  $ES_BIN/plugin install -b com.floragunn/search-guard-ssl/$SG_SSL_VERSION > /dev/null 
   check_ret
   
   cd /demo_root_ca
@@ -121,7 +121,7 @@ do_install() {
   check_ret
   wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-auditlog&v=2.4-3" --content-disposition  > /dev/null 2>&1
   check_ret
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-rest-api&v=2.4-3" --content-disposition  > /dev/null 2>&1
+  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-rest-api&v=2.4-2" --content-disposition  > /dev/null 2>&1
   check_ret
   wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-auth-http-kerberos&v=2.4-2" --content-disposition  > /dev/null 2>&1
   check_ret
@@ -210,10 +210,10 @@ do_install() {
   
   while ! nc -z $SG_PUBHOST 9200 > /dev/null 2>&1; do
     echo "Wait for elasticsearch ..."
-    sleep 0.5
+    sleep 2
   done
   
-  echo "elasticsearch up"
+  echo "Elasticsearch up and running"
   
   
   if [[ $SG_PRIVHOST == *"10-0-0-12"* ]]; then
