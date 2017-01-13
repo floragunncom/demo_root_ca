@@ -48,7 +48,7 @@ do_install() {
   #dpkg --force-all -i kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
   #check_ret
   
-  NETTY_NATIVE_VERSION=1.1.33.Fork27
+  NETTY_NATIVE_VERSION=1.1.33.Fork17
   NETTY_NATIVE_CLASSIFIER=linux-x86_64
   ES_BIN=/usr/share/elasticsearch/bin
   ES_CONF=/etc/elasticsearch
