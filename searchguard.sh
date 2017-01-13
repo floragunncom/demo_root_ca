@@ -30,8 +30,8 @@ do_install() {
   #  check_ret
   #fi
   
-  https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.4.1/elasticsearch-2.4.1.deb
-
+  wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.4.1/elasticsearch-2.4.1.deb > /dev/null 2>&1
+  check_ret
   
   dpkg --force-all -i elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
   check_ret
