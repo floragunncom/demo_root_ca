@@ -6,6 +6,10 @@ post_slack() {
 }
 
 do_install() {
+
+  mkfs -t ext4 -V /dev/xvdb
+  mount /dev/xvdb /mnt -o defaults,noatime,nodiratime,discard
+  echo noop | tee /sys/block/xvdc/queue/scheduler
   
   export REGION=$(wget -qO- http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//' | tr -d '"')
   export STACKNAME=$(aws ec2 describe-instances --filters "Name=ip-address,Values=$(ec2metadata --public-ipv4)" --region $REGION | jq '.Reservations[0].Instances[0].Tags | map(select (.Key == "aws:cloudformation:stack-name" )) ' | jq .[0].Value | tr -d '"')
