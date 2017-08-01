@@ -178,7 +178,7 @@ do_install() {
   echo "vm.max_map_count=262144" >> /etc/sysctl.conf
   echo 262144 > /proc/sys/vm/max_map_count 
   
-  mkdir -p /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
+  mkdir -p /etc/systemd/system/elasticsearch.service.d
   echo "[Service]" > /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
   echo "LimitMEMLOCK=infinity" >> /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
   
