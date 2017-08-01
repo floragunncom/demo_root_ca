@@ -28,8 +28,8 @@ do_install() {
   pip3 install elasticsearch requests cryptography pyopenssl ndg-httpsclient pyasn1
   esrally --track=geopoint --pipeline=benchmark-only --target-hosts=10.0.0.6:9200,10.0.0.7:9200,10.0.0.8:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
   
-  sed -i -e 's/-Xmx2g/-Xmx8g/g' /etc/elasticsearch/jvm.options
-  sed -i -e 's/-Xms2g/-Xms8g/g' /etc/elasticsearch/jvm.options
+  sed -i -e 's/-Xmx2g/-Xmx32g/g' /etc/elasticsearch/jvm.options
+  sed -i -e 's/-Xms2g/-Xms32g/g' /etc/elasticsearch/jvm.options
   check_ret "xmx sed"
 
   ES_VERSION=5.5.1
