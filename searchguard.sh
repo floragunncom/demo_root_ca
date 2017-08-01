@@ -124,7 +124,8 @@ do_install() {
   wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-kibana-multitenancy&v=5.4-4" --content-disposition  > /dev/null 2>&1
   check_ret "multitenancy module"
   cd - > /dev/null 2>&1
-    
+
+  #dns seems to be broken on aws currently, so we need to disable hostname verification
   echo "cluster.name: $STACKNAME" > $ES_CONF/elasticsearch.yml
   echo "discovery.zen.hosts_provider: ec2" > $ES_CONF/elasticsearch.yml
   echo "discovery.type: ec2" >> $ES_CONF/elasticsearch.yml
