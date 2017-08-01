@@ -127,7 +127,7 @@ do_install() {
 
   #dns seems to be broken on aws currently, so we need to disable hostname verification
   echo "cluster.name: $STACKNAME" > $ES_CONF/elasticsearch.yml
-  echo "discovery.zen.hosts_provider: ec2" > $ES_CONF/elasticsearch.yml
+  echo "discovery.zen.hosts_provider: ec2" >> $ES_CONF/elasticsearch.yml
   echo "discovery.type: ec2" >> $ES_CONF/elasticsearch.yml
   echo "discovery.ec2.host_type: private_dns" >> $ES_CONF/elasticsearch.yml
   echo "cloud.aws.protocol: http" >> $ES_CONF/elasticsearch.yml
