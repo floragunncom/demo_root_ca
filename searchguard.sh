@@ -23,10 +23,13 @@ do_install() {
   
   dolog "Install packages"
   
-  #apt install -yqq python3-pip
-  #pip3 install esrally
+  apt install -yqq python3-pip
+  pip3 install esrally
+  pip3 install requests ndg-httpsclient --upgrade
   #pip3 install elasticsearch requests cryptography pyopenssl ndg-httpsclient pyasn1
   #esrally --track=geopoint --pipeline=benchmark-only --target-hosts=10.0.0.6:9200,10.0.0.7:9200,10.0.0.8:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
+
+  #ssl_openssl_supports_key_manager_factory":false,"ssl_openssl_supports_hostname_validation":false
 
   ES_VERSION=5.5.1
   
@@ -235,14 +238,14 @@ do_install() {
   curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter/tweet/1?pretty" -d'
   {
     "user" : "searchguard",
-    "post_date" : "20013-11-15T14:12:12",
+    "post_date" : "2013-11-15T14:12:12",
     "message" : "rockn roll"
   }'
 
   curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter1/tweet/1?pretty" -d'
   {
     "user" : "searchguard1",
-    "post_date" : "20015-11-15T14:12:12",
+    "post_date" : "2015-11-15T14:12:12",
     "message" : "rockn roll"
   }'
   
