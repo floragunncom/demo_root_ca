@@ -23,10 +23,10 @@ do_install() {
   
   dolog "Install packages"
   
-  apt install python3-pip
-  pip3 install esrally
-  pip3 install elasticsearch requests cryptography pyopenssl ndg-httpsclient pyasn1
-  esrally --track=geopoint --pipeline=benchmark-only --target-hosts=10.0.0.6:9200,10.0.0.7:9200,10.0.0.8:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
+  #apt install -yqq python3-pip
+  #pip3 install esrally
+  #pip3 install elasticsearch requests cryptography pyopenssl ndg-httpsclient pyasn1
+  #esrally --track=geopoint --pipeline=benchmark-only --target-hosts=10.0.0.6:9200,10.0.0.7:9200,10.0.0.8:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
 
   ES_VERSION=5.5.1
   
