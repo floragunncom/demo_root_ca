@@ -27,7 +27,7 @@ do_install() {
   pip3 install esrally
   pip3 install requests ndg-httpsclient --upgrade
   #pip3 install elasticsearch requests cryptography pyopenssl ndg-httpsclient pyasn1
-  #esrally --track=geopoint --pipeline=benchmark-only --target-hosts=10.0.0.6:9200,10.0.0.7:9200,10.0.0.8:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
+  #esrally --track=logging --pipeline=benchmark-only --target-hosts=10.0.0.6:9200,10.0.0.7:9200,10.0.0.8:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
 
   #ssl_openssl_supports_key_manager_factory":false,"ssl_openssl_supports_hostname_validation":false
 
@@ -198,6 +198,11 @@ do_install() {
 
   echo "searchguard.authcz.admin_dn:">> $ES_CONF/elasticsearch.yml
   echo "  - CN=sgadmin" >> $ES_CONF/elasticsearch.yml
+  
+  echo "path.data: /mnt/esdata">> $ES_CONF/elasticsearch.yml
+  
+  mkdir -p /mnt/esdata
+  chown -R elasticsearch:elasticsearch /mnt/esdata
 
   echo "vm.max_map_count=262144" >> /etc/sysctl.conf
   echo 262144 > /proc/sys/vm/max_map_count 
