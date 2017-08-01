@@ -57,8 +57,8 @@ do_install() {
   dpkg --force-all -i kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
   check_ret "Installing Kibana"
   
-  sed -i -e 's/-Xmx2g/-Xmx32g/g' /etc/elasticsearch/jvm.options
-  sed -i -e 's/-Xms2g/-Xms32g/g' /etc/elasticsearch/jvm.options
+  sed -i -e 's/-Xmx2g/-Xmx30g/g' /etc/elasticsearch/jvm.options
+  sed -i -e 's/-Xms2g/-Xms30g/g' /etc/elasticsearch/jvm.options
   check_ret "xmx sed"
   
   NETTY_NATIVE_VERSION=2.0.5.Final
