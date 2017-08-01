@@ -1,6 +1,43 @@
 # In this file users, backendroles and hosts can be mapped to search guard roles.
 # What a role is allowed to do you specify in sg_roles.yml
 
+sg_all_access:
+  users:
+    - admin
+
+sg_logstash:
+  users:
+    - logstash
+    
+sg_kibana_server:
+  users:
+    - kibanaserver
+    
+sg_kibana:
+  backendroles:
+    - kibanarole
+
+sg_monitor:
+  backendroles:
+    - kibanarole
+   
+sg_alerting:
+  backendroles:
+    - kibanarole
+
+sg_public:
+  users:
+    - '*'
+    
+sg_readall:
+  users:
+    - readall
+    
+sg_own_index:
+  users:
+    - '*'
+    
+# Examples
 sg_role_starfleet:
   backendroles:
     - starfleet
@@ -11,6 +48,8 @@ sg_role_starfleet:
     - "*.starfleetintranet.com"
   users:
     - worf
+    - riker
+    - troid
 
 sg_role_starfleet_captains:
   backendroles:
@@ -23,42 +62,11 @@ sg_role_klingons1:
     - "*.klingongov.kli"
   users:
     - worf
-
-sg_logstash:
-  users:
-    - logstash
     
-sg_kibana4_server:
+sg_kibana_testindex:
   users:
-    - kibanaserver
-    
-sg_kibana4:
-  users:
-    - kibanaro
-
-sg_all_access:
-  users:
-    - admin
-    - adm
-    
-sg_public:
-  users:
-    - '*'
-    
-sg_readall:
-  users:
-    - readall
-    - riker
-    - troid
+    - test
     
 sg_readonly_dlsfls:
   users:
     - dlsflsuser
-    
-sg_kibana4_testindex:
-  users:
-    - test
-
-sg_own_index:
-  users:
-    - '*'

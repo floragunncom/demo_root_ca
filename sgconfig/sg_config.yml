@@ -35,7 +35,9 @@
 #   kerberos (challenging) NOT FREE FOR COMMERCIAL
 #   clientcert (not challenging, needs https)
 #   jwt (not challenging) NOT FREE FOR COMMERCIAL
-#   host (not challenging)
+#   host (not challenging) #DEPRECATED, will be removed in a future version.
+#                           host based authentication is configurable in sg_roles_mapping,
+#                           so no need for a "host http authenticator"
 
 # Authc
 #   internal
@@ -48,6 +50,14 @@
 
 searchguard:
   dynamic:
+    kibana:
+      # Kibana multitenancy - NOT FREE FOR COMMERCIAL USE
+      # see https://github.com/floragunncom/search-guard-docs/blob/master/multitenancy.md
+      # To make this work you need to install https://github.com/floragunncom/search-guard-module-kibana-multitenancy/wiki
+      #multitenancy_enabled: true
+      #server_username: kibanaserver
+      #index: '.kibana'
+      #do_not_fail_on_forbidden: false
     http:
       anonymous_auth_enabled: false
       xff:
@@ -71,8 +81,6 @@ searchguard:
           config:
             # If true a lot of kerberos/security related debugging output will be logged to standard out
             krb_debug: false
-            # Acceptor (Server) Principal name, must be present in acceptor_keytab_path file
-            acceptor_principal: 'HTTP/localhost'
             # If true then the realm will be stripped from the user name
             strip_realm_from_principal: true
         authentication_backend:
@@ -100,7 +108,7 @@ searchguard:
         enabled: false
         order: 1
         http_authenticator:
-          type: host
+          type: host #DEPRECATED, will be removed in a future version
           challenge: false
         authentication_backend:
           type: noop
@@ -123,6 +131,8 @@ searchguard:
         order: 2
         http_authenticator:
           type: clientcert
+          config:
+            username_attribute: cn #optional, if omitted DN becomes username
           challenge: false
         authentication_backend:
           type: noop
@@ -151,7 +161,7 @@ searchguard:
             userbase: 'ou=people,dc=example,dc=com'
             # Filter to search for users (currently in the whole subtree beneath userbase)
             # {0} is substituted with the username 
-            usersearch: '(uid={0})'
+            usersearch: '(sAMAccountName={0})'
             # Use this attribute from the user as username (if not set then DN is used)
             username_attribute: null
     authz:    
@@ -178,21 +188,25 @@ searchguard:
             # {0} is substituted with the DN of the user
             # {1} is substituted with the username 
             # {2} is substituted with an attribute value from user's directory entry, of the authenticated user. Use userroleattribute to specify the name of the attribute            
-            rolesearch: '(uniqueMember={0})'
+            rolesearch: '(member={0})'
             # Specify the name of the attribute which value should be substituted with {2} above
             userroleattribute: null
             # Roles as an attribute of the user entry
-            userrolename: memberOf
-            # The attribute in a role entry containing the name of that role
+            userrolename: disabled
+            #userrolename: memberOf
+            # The attribute in a role entry containing the name of that role, Default is "name".
+            # Can also be "dn" to use the full DN as rolename.
             rolename: cn
             # Resolve nested roles transitive (roles which are members of other roles and so on ...)
             resolve_nested_roles: true
-            
             userbase: 'ou=people,dc=example,dc=com'
             # Filter to search for users (currently in the whole subtree beneath userbase)
             # {0} is substituted with the username 
             usersearch: '(uid={0})'
-            
+            # Skip users matching a user name, a wildcard or a regex pattern
+            #skip_users: 
+            #  - 'cn=Michael Jackson,ou*people,o=TEST'
+            #  - '/\S*/'    
       roles_from_another_ldap:
         enabled: false
         authorization_backend:

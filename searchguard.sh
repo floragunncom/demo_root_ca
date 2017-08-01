@@ -23,7 +23,7 @@ do_install() {
   
   echo "Install packages"
   
-  ES_VERSION=5.0.2
+  ES_VERSION=5.5.1
   
   if [ ! -f "elasticsearch-$ES_VERSION.deb" ]; then
     wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
@@ -45,13 +45,13 @@ do_install() {
   dpkg --force-all -i kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
   check_ret
   
-  NETTY_NATIVE_VERSION=1.1.33.Fork23
+  NETTY_NATIVE_VERSION=2.0.5.Final
   NETTY_NATIVE_CLASSIFIER=linux-x86_64
   ES_BIN=/usr/share/elasticsearch/bin
   ES_CONF=/etc/elasticsearch
   ES_LOG=/var/log/elasticsearch
   ES_PLUGINS=/usr/share/elasticsearch/plugins
-  SG_VERSION=$ES_VERSION-9
+  SG_VERSION=$ES_VERSION-14
   ORG_NAME="Example DSG Inc. 1.0"
   
   echo "SG_PUBHOST: $SG_PUBHOST"
@@ -110,20 +110,22 @@ do_install() {
 
   echo "Download modules"
 
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-authbackend-ldap&v=5.0-5" --content-disposition  > /dev/null 2>&1
+  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-authbackend-ldap&v=5.0-7" --content-disposition  > /dev/null 2>&1
   check_ret
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-auditlog&v=5.0-3" --content-disposition  > /dev/null 2>&1
+  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-auditlog&v=5.3-5" --content-disposition  > /dev/null 2>&1
   check_ret
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-rest-api&v=5.0-3" --content-disposition  > /dev/null 2>&1
+  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-rest-api&v=5.3-5" --content-disposition  > /dev/null 2>&1
   check_ret
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-auth-http-kerberos&v=5.0-2" --content-disposition  > /dev/null 2>&1
+  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-auth-http-kerberos&v=5.0-4" --content-disposition  > /dev/null 2>&1
   check_ret
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-auth-http-jwt&v=5.0-2" --content-disposition  > /dev/null 2>&1
+  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-auth-http-jwt&v=5.0-5" --content-disposition  > /dev/null 2>&1
   check_ret
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-dlsfls&v=5.0-5" --content-disposition  > /dev/null 2>&1
+  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-dlsfls&v=5.3-6" --content-disposition  > /dev/null 2>&1
+  check_ret
+  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-kibana-multitenancy&v=5.4-4" --content-disposition  > /dev/null 2>&1
   check_ret
   cd - > /dev/null 2>&1
-  
+    
   echo "cluster.name: $STACKNAME" > $ES_CONF/elasticsearch.yml
   echo "discovery.type: ec2" >> $ES_CONF/elasticsearch.yml
   echo "discovery.ec2.host_type: private_dns" >> $ES_CONF/elasticsearch.yml
@@ -141,6 +143,7 @@ do_install() {
   echo "cluster.routing.allocation.disk.watermark.high: 10mb" >> $ES_CONF/elasticsearch.yml
   echo "cluster.routing.allocation.disk.watermark.low: 10mb" >> $ES_CONF/elasticsearch.yml
   echo "node.name: $SG_PUBHOST" >> $ES_CONF/elasticsearch.yml
+  echo "bootstrap.memory_lock: true" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
   echo "##################################################" >> $ES_CONF/elasticsearch.yml
@@ -214,7 +217,7 @@ do_install() {
 
   cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
   echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
-  /usr/share/kibana/bin/kibana-plugin install https://files.slack.com/files-pri/T0KUZ3JGN-F3JC0QZ38/download/searchguard-kibana-5.0.2.zip?pub_secret=39500fd32d
+  /usr/share/kibana/bin/kibana-plugin install https://github.com/floragunncom/search-guard-kibana-plugin/releases/download/v5.5.1-3/searchguard-kibana-5.5.1-3.zip
 
   /bin/systemctl enable kibana.service
   check_ret
