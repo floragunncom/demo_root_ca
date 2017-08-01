@@ -178,8 +178,13 @@ do_install() {
   echo "vm.max_map_count=262144" >> /etc/sysctl.conf
   echo 262144 > /proc/sys/vm/max_map_count 
   
+  mkdir -p /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
   echo "[Service]" > /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
   echo "LimitMEMLOCK=infinity" >> /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
+  
+  echo "MAX_LOCKED_MEMORY=unlimited" >> /etc/default/elasticsearch
+  echo "MAX_OPEN_FILES=1000000" >> /etc/default/elasticsearch
+  echo "MAX_MAP_COUNT=262144"  >> /etc/default/elasticsearch
   
   ulimit -n 1000000
   
