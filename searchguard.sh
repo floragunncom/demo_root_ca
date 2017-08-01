@@ -184,12 +184,11 @@ do_install() {
   mkdir -p /etc/systemd/system/elasticsearch.service.d
   echo "[Service]" > /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
   echo "LimitMEMLOCK=infinity" >> /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
+  echo "LimitNOFILE=1000000" >> /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
   
   echo "MAX_LOCKED_MEMORY=unlimited" >> /etc/default/elasticsearch
   echo "MAX_OPEN_FILES=1000000" >> /etc/default/elasticsearch
   echo "MAX_MAP_COUNT=262144"  >> /etc/default/elasticsearch
-  
-  ulimit -n 1000000
   
   echo "elasticsearch  -  nofile  1000000" >> /etc/security/limits.conf
     
