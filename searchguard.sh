@@ -126,14 +126,16 @@ do_install() {
   cd - > /dev/null 2>&1
     
   echo "cluster.name: $STACKNAME" > $ES_CONF/elasticsearch.yml
+  echo "discovery.zen.hosts_provider: ec2" > $ES_CONF/elasticsearch.yml
   echo "discovery.type: ec2" >> $ES_CONF/elasticsearch.yml
   echo "discovery.ec2.host_type: private_dns" >> $ES_CONF/elasticsearch.yml
   echo "cloud.aws.protocol: http" >> $ES_CONF/elasticsearch.yml
   #echo 'network.host: ["_ec2:publicDns_"]' >> $ES_CONF/elasticsearch.yml
-  echo "transport.host: $SG_PRIVHOST" >> $ES_CONF/elasticsearch.yml
+  echo "network.host: _ec2:privateDns_" >> $ES_CONF/elasticsearch.yml
+  echo "transport.host: _ec2:privateDns_" >> $ES_CONF/elasticsearch.yml
   echo "transport.tcp.port: 9300" >> $ES_CONF/elasticsearch.yml
   
-  echo "http.host: $SG_PUBHOST" >> $ES_CONF/elasticsearch.yml
+  echo "http.host: _ec2:publicDns_" >> $ES_CONF/elasticsearch.yml
   echo "http.port: 9200" >> $ES_CONF/elasticsearch.yml
   echo "http.cors.enabled: true" >> $ES_CONF/elasticsearch.yml
   echo 'http.cors.allow-origin: "*"' >> $ES_CONF/elasticsearch.yml
@@ -160,7 +162,7 @@ do_install() {
   #echo "searchguard.ssl.transport.keystore_password: $KS_PASS" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.transport.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
   #echo "searchguard.ssl.transport.truststore_password: $TS_PASS" >> $ES_CONF/elasticsearch.yml
-  #echo "searchguard.ssl.transport.enforce_hostname_verification: false" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.transport.enforce_hostname_verification: false" >> $ES_CONF/elasticsearch.yml
 
   echo "searchguard.ssl.http.enabled: true" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
