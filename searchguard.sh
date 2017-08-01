@@ -9,9 +9,9 @@ do_install() {
   
   export REGION=$(wget -qO- http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//' | tr -d '"')
   export STACKNAME=$(aws ec2 describe-instances --filters "Name=ip-address,Values=$(ec2metadata --public-ipv4)" --region $REGION | jq '.Reservations[0].Instances[0].Tags | map(select (.Key == "aws:cloudformation:stack-name" )) ' | jq .[0].Value | tr -d '"')
-  SG_PUBHOST=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
-  SG_PRIVHOST=$(curl -s http://169.254.169.254/latest/meta-data/hostname)
-  post_slack "Will bootstrap $STACKNAME in $REGION on $SG_PUBHOST ($DIST)"
+  export SG_PUBHOST=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
+  export SG_PRIVHOST=$(curl -s http://169.254.169.254/latest/meta-data/hostname)
+  dolog "Will bootstrap $STACKNAME in $REGION on $SG_PUBHOST ($DIST)"
   
   #GITHUB_URL="$(aws cloudformation describe-stacks --stack-name $STACKNAME  --region $REGION | jq '.Stacks[0].Parameters | map(select (.ParameterKey == "GithubUrl" ))[0].ParameterValue' | tr -d '"' )"
   
@@ -21,29 +21,29 @@ do_install() {
   systemctl stop metricbeat.service > /dev/null 2>&1
   systemctl stop elasticsearch.service > /dev/null 2>&1
   
-  echo "Install packages"
+  dolog "Install packages"
   
   ES_VERSION=5.5.1
   
   if [ ! -f "elasticsearch-$ES_VERSION.deb" ]; then
     wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
-    check_ret
+    check_ret "Downloading ES"
   fi
   
   dpkg --force-all -i elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
-  check_ret
+  check_ret "Installing ES"
   
   wget https://artifacts.elastic.co/downloads/beats/metricbeat/metricbeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  check_ret
+  check_ret "Downloading Metricbeat"
   
   dpkg --force-all -i metricbeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  check_ret
+  check_ret "Installing Metricbeat"
   
   wget https://artifacts.elastic.co/downloads/kibana/kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  check_ret
+  check_ret "Downloading Kibana"
   
   dpkg --force-all -i kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  check_ret
+  check_ret "Installing Kibana"
   
   NETTY_NATIVE_VERSION=2.0.5.Final
   NETTY_NATIVE_CLASSIFIER=linux-x86_64
@@ -61,29 +61,29 @@ do_install() {
   $ES_BIN/elasticsearch-plugin remove search-guard-5 > /dev/null 2>&1
   
   $ES_BIN/elasticsearch-plugin install -b discovery-ec2 > /dev/null 
-  check_ret
+  check_ret "Installing discovery-ec2 plugin"
   $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-5:$SG_VERSION > /dev/null 
-  check_ret
+  check_ret "Installing SG plugin"
   
   cd /demo_root_ca
   git pull > /dev/null 2>&1
   
-  echo "Generate certificates"
+  dolog "Generate certificates"
   cp truststore.jks truststore.jks.orig
   rm -rf *.jks *.p12 *.pem *.csr *.key
   
   ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PUBHOST" "$SG_PUBHOST" changeit "ca pass" > /dev/null 2>&1
-  check_ret
+  check_ret "generate certificate"
   ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PRIVHOST" "$SG_PRIVHOST" changeit "ca pass" > /dev/null 2>&1
-  check_ret
+  check_ret "generate certificate"
   ./gen_client_node_cert.sh "$ORG_NAME" "CN=user" changeit "ca pass" > /dev/null 2>&1
-  check_ret
+  check_ret "generate certificate"
   ./gen_client_node_cert.sh "$ORG_NAME" "CN=sgadmin" changeit "ca pass" > /dev/null 2>&1
-  check_ret
+  check_ret "generate certificate"
   ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=topbeat" $SG_PUBHOST topbeat "ca pass"  > /dev/null 2>&1
-  check_ret
+  check_ret "generate certificate"
   ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=kibana" $SG_PUBHOST kibana "ca pass"  > /dev/null 2>&1
-  check_ret
+  check_ret "generate certificate"
 
   cp truststore.jks.orig truststore.jks
 
@@ -99,31 +99,30 @@ do_install() {
   chmod -R 755 $ES_CONF
   
   if [ ! -f "netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar" ]; then
-    echo "Download netty native"
     wget -O $ES_PLUGINS/search-guard-5/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://search.maven.org/remotecontent?filepath=io/netty/netty-tcnative/$NETTY_NATIVE_VERSION/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar > /dev/null 2>&1
-    check_ret
+    check_ret "Downloading netty native"
   fi
   
   cd - > /dev/null 2>&1
   
   cd $ES_PLUGINS/search-guard-5
 
-  echo "Download modules"
+  dolog "Download modules"
 
   wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-authbackend-ldap&v=5.0-7" --content-disposition  > /dev/null 2>&1
-  check_ret
+  check_ret "ldap module"
   wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-auditlog&v=5.3-5" --content-disposition  > /dev/null 2>&1
-  check_ret
+  check_ret "auditlog module"
   wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-rest-api&v=5.3-5" --content-disposition  > /dev/null 2>&1
-  check_ret
+  check_ret "rest api module"
   wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-auth-http-kerberos&v=5.0-4" --content-disposition  > /dev/null 2>&1
-  check_ret
+  check_ret "kerberos module"
   wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-auth-http-jwt&v=5.0-5" --content-disposition  > /dev/null 2>&1
-  check_ret
+  check_ret "jwt module"
   wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-dlsfls&v=5.3-6" --content-disposition  > /dev/null 2>&1
-  check_ret
+  check_ret "dls module"
   wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-kibana-multitenancy&v=5.4-4" --content-disposition  > /dev/null 2>&1
-  check_ret
+  check_ret "multitenancy module"
   cd - > /dev/null 2>&1
     
   echo "cluster.name: $STACKNAME" > $ES_CONF/elasticsearch.yml
@@ -178,27 +177,34 @@ do_install() {
 
   echo "vm.max_map_count=262144" >> /etc/sysctl.conf
   echo 262144 > /proc/sys/vm/max_map_count 
+  
+  echo "[Service]" > /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
+  echo "LimitMEMLOCK=infinity" >> /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
+  
+  ulimit -n 1000000
+  
+  echo "elasticsearch  -  nofile  1000000" >> /etc/security/limits.conf
     
   /bin/systemctl daemon-reload
-  check_ret
+  check_ret "daemon-reload"
   /bin/systemctl enable elasticsearch.service
-  check_ret
+  check_ret "enable elasticsearch.service"
   systemctl start elasticsearch.service
-  check_ret
+  check_ret "start elasticsearch.service"
   
   while ! nc -z $SG_PUBHOST 9200 > /dev/null 2>&1; do
-    echo "Wait for elasticsearch ..."
-    sleep 0.5
+    dolog "Wait for elasticsearch ..."
+    sleep 5
   done
   
   echo "elasticsearch up"
   sleep 5
   
-  post_slack "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
+  dolog "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
   
   chmod +x $ES_PLUGINS/search-guard-5/tools/sgadmin.sh
   $ES_PLUGINS/search-guard-5/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PRIVHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=$SG_PRIVHOST-keystore.jks
-  check_ret
+  check_ret "running sgadmin"
   post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
   
   curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter/tweet/1?pretty" -d'
@@ -214,6 +220,8 @@ do_install() {
     "post_date" : "20015-11-15T14:12:12",
     "message" : "rockn roll"
   }'
+  
+  dolog "Install Kibana"
 
   cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
   echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
@@ -231,22 +239,22 @@ do_install() {
   systemctl start metricbeat.service
   check_ret
   
-  post_slack "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
+  dolog "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
     
   curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" > health 2>&1
-  check_ret
+  check_ret "final curl 1"
   curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" > authinfo 2>&1
-  check_ret
+  check_ret "final curl 2"
   curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" > sslinfo 2>&1
-  check_ret
+  check_ret "final curl 3"
   
   cat authinfo
   cat sslinfo
   cat health
   
-  post_slack "Authinfo: $(cat authinfo)"
-  post_slack "SSL Info: $(cat sslinfo)"
-  post_slack "Cluster Health: $(cat health)"
+  dolog "Authinfo: $(cat authinfo)"
+  dolog "SSL Info: $(cat sslinfo)"
+  dolog "Cluster Health: $(cat health)"
   
 }
 
@@ -353,10 +361,15 @@ check_aws() {
 check_ret() {
     local status=$?
     if [ $status -ne 0 ]; then
-         echo "ERR - The last command failed with status $status" 1>&2
-         post_slack "ERR - The last command failed with status $status"
+         echo "ERR - The last command $1 failed with status $status" 1>&2
+         post_slack "ERR - The last command $1 failed with status $status on $SG_PRIVHOST"
          exit $status
     fi
+}
+
+dolog() {
+	 echo "$1" 1>&2
+	 post_slack "$SG_PRIVHOST : $1"
 }
 
 cd /
