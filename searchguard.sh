@@ -23,6 +23,15 @@ do_install() {
   
   dolog "Install packages"
   
+  apt install python3-pip
+  pip3 install esrally
+  pip3 install elasticsearch requests cryptography pyopenssl ndg-httpsclient pyasn1
+  esrally --track=geopoint --pipeline=benchmark-only --target-hosts=10.0.0.6:9200,10.0.0.7:9200,10.0.0.8:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
+  
+  sed -i -e 's/-Xmx2g/-Xmx8g/g' /etc/elasticsearch/jvm.options
+  sed -i -e 's/-Xms2g/-Xms8g/g' /etc/elasticsearch/jvm.options
+  check_ret "xmx sed"
+
   ES_VERSION=5.5.1
   
   if [ ! -f "elasticsearch-$ES_VERSION.deb" ]; then
@@ -59,11 +68,14 @@ do_install() {
   
   $ES_BIN/elasticsearch-plugin remove discovery-ec2 > /dev/null 2>&1
   $ES_BIN/elasticsearch-plugin remove search-guard-5 > /dev/null 2>&1
+  $ES_BIN/elasticsearch-plugin remove x-pack > /dev/null 2>&1
   
   $ES_BIN/elasticsearch-plugin install -b discovery-ec2 > /dev/null 
   check_ret "Installing discovery-ec2 plugin"
   $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-5:$SG_VERSION > /dev/null 
   check_ret "Installing SG plugin"
+  $ES_BIN/elasticsearch-plugin install -b x-pack > /dev/null 
+  check_ret "Installing xpack plugin"
   
   cd /demo_root_ca
   git pull > /dev/null 2>&1
@@ -146,6 +158,12 @@ do_install() {
   echo "cluster.routing.allocation.disk.watermark.low: 10mb" >> $ES_CONF/elasticsearch.yml
   echo "node.name: $SG_PUBHOST" >> $ES_CONF/elasticsearch.yml
   echo "bootstrap.memory_lock: true" >> $ES_CONF/elasticsearch.yml
+  echo "xpack.security.enabled: false" >> $ES_CONF/elasticsearch.yml
+  echo "xpack.watcher.enabled: false" >> $ES_CONF/elasticsearch.yml
+  echo "xpack.monitoring.enabled: true" >> $ES_CONF/elasticsearch.yml
+  echo "xpack.ml.enabled: false" >> $ES_CONF/elasticsearch.yml
+  echo "" >> $ES_CONF/elasticsearch.yml
+  echo "" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
   echo "##################################################" >> $ES_CONF/elasticsearch.yml
@@ -233,6 +251,8 @@ do_install() {
   cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
   echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
   /usr/share/kibana/bin/kibana-plugin install https://github.com/floragunncom/search-guard-kibana-plugin/releases/download/v5.5.1-3/searchguard-kibana-5.5.1-3.zip
+  /usr/share/kibana/bin/kibana-plugin install x-pack
+
 
   /bin/systemctl enable kibana.service
   check_ret
