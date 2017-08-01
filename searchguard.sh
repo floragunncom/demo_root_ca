@@ -47,10 +47,10 @@ do_install() {
   
   NETTY_NATIVE_VERSION=2.0.5.Final
   NETTY_NATIVE_CLASSIFIER=linux-x86_64
-  ES_BIN=/usr/share/elasticsearch/bin
-  ES_CONF=/etc/elasticsearch
-  ES_LOG=/var/log/elasticsearch
-  ES_PLUGINS=/usr/share/elasticsearch/plugins
+  export ES_BIN=/usr/share/elasticsearch/bin
+  export ES_CONF=/etc/elasticsearch
+  export ES_LOG=/var/log/elasticsearch
+  export ES_PLUGINS=/usr/share/elasticsearch/plugins
   SG_VERSION=$ES_VERSION-14
   ORG_NAME="Example DSG Inc. 1.0"
   
@@ -208,7 +208,7 @@ do_install() {
   dolog "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
   
   chmod +x $ES_PLUGINS/search-guard-5/tools/sgadmin.sh
-  $ES_PLUGINS/search-guard-5/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PRIVHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=$SG_PRIVHOST-keystore.jks
+  $ES_PLUGINS/search-guard-5/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PRIVHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=sgadmin-keystore.jks -nhnv
   check_ret "running sgadmin"
   post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
   
