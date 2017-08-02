@@ -1,6 +1,6 @@
 output.elasticsearch:
   #workaround for 5.0.0 where template is missing
-  template.enabled: false
+  #template.enabled: false
   username: logstash
   password: logstash
   protocol: https
