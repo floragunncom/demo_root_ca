@@ -1,5 +1,5 @@
 #!/bin/bash
-#set -x
+set -x
 
 post_slack() {
    curl -X POST --data-urlencode 'payload={"channel": "#aws_notify", "username": "awsbot", "text": "'"$1"'", "icon_emoji": ":cyclone:"}' $SLACKURL > /dev/null 2>&1
@@ -27,7 +27,7 @@ do_install() {
   
   dolog "Install packages"
   
-  apt install -yqq python3-pip
+  #apt install -yqq python3-pip
   pip3 install esrally
   pip3 install requests ndg-httpsclient --upgrade
   #pip3 install elasticsearch requests cryptography pyopenssl ndg-httpsclient pyasn1
@@ -35,7 +35,8 @@ do_install() {
 
   #ssl_openssl_supports_key_manager_factory":false,"ssl_openssl_supports_hostname_validation":false
 
-  ES_VERSION=5.5.1
+  ES_VERSION=6.0.0
+  SG_VERSION=$ES_VERSION-17.beta1api
   
   if [ ! -f "elasticsearch-$ES_VERSION.deb" ]; then
     wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
@@ -57,9 +58,23 @@ do_install() {
   dpkg --force-all -i kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
   check_ret "Installing Kibana"
   
-  sed -i -e 's/-Xmx2g/-Xmx30g/g' /etc/elasticsearch/jvm.options
-  sed -i -e 's/-Xms2g/-Xms30g/g' /etc/elasticsearch/jvm.options
+  # Total memory in KB
+  totalMemKB=$(awk '/MemTotal:/ { print $2 }' /proc/meminfo)
+
+  # Percentage of memory to use for Java heap
+  usagePercent=50
+
+  # heap size in KB
+  let heapKB=$totalMemKB*$usagePercent/100
+
+  # heap size in MB
+  let heapMB=$heapKB/1024
+  
+  sed -i -e "s/-Xmx1g/-Xmx${heapMB}m/g" /etc/elasticsearch/jvm.options
+  sed -i -e "s/-Xms1g/-Xms${heapMB}m/g" /etc/elasticsearch/jvm.options
   check_ret "xmx sed"
+  
+  cat /etc/elasticsearch/jvm.options
   
   NETTY_NATIVE_VERSION=2.0.5.Final
   NETTY_NATIVE_CLASSIFIER=linux-x86_64
@@ -67,19 +82,19 @@ do_install() {
   export ES_CONF=/etc/elasticsearch
   export ES_LOG=/var/log/elasticsearch
   export ES_PLUGINS=/usr/share/elasticsearch/plugins
-  SG_VERSION=$ES_VERSION-14
+  
   ORG_NAME="Example DSG Inc. 1.0"
   
   echo "SG_PUBHOST: $SG_PUBHOST"
   echo "SG_PRIVHOST: $SG_PRIVHOST"
   
   $ES_BIN/elasticsearch-plugin remove discovery-ec2 > /dev/null 2>&1
-  $ES_BIN/elasticsearch-plugin remove search-guard-5 > /dev/null 2>&1
+  $ES_BIN/elasticsearch-plugin remove search-guard-6 > /dev/null 2>&1
   $ES_BIN/elasticsearch-plugin remove x-pack > /dev/null 2>&1
   
   $ES_BIN/elasticsearch-plugin install -b discovery-ec2 > /dev/null 
   check_ret "Installing discovery-ec2 plugin"
-  $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-5:$SG_VERSION > /dev/null 
+  $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-6:$SG_VERSION > /dev/null 
   check_ret "Installing SG plugin"
   $ES_BIN/elasticsearch-plugin install -b x-pack > /dev/null 
   check_ret "Installing xpack plugin"
@@ -118,30 +133,10 @@ do_install() {
   chmod -R 755 $ES_CONF
   
   if [ ! -f "netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar" ]; then
-    wget -O $ES_PLUGINS/search-guard-5/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://search.maven.org/remotecontent?filepath=io/netty/netty-tcnative/$NETTY_NATIVE_VERSION/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar > /dev/null 2>&1
+    wget -O $ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://search.maven.org/remotecontent?filepath=io/netty/netty-tcnative/$NETTY_NATIVE_VERSION/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar > /dev/null 2>&1
     check_ret "Downloading netty native"
   fi
   
-  cd - > /dev/null 2>&1
-  
-  cd $ES_PLUGINS/search-guard-5
-
-  dolog "Download modules"
-
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-authbackend-ldap&v=5.0-7" --content-disposition  > /dev/null 2>&1
-  check_ret "ldap module"
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-auditlog&v=5.3-5" --content-disposition  > /dev/null 2>&1
-  check_ret "auditlog module"
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-rest-api&v=5.3-5" --content-disposition  > /dev/null 2>&1
-  check_ret "rest api module"
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-auth-http-kerberos&v=5.0-4" --content-disposition  > /dev/null 2>&1
-  check_ret "kerberos module"
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-auth-http-jwt&v=5.0-5" --content-disposition  > /dev/null 2>&1
-  check_ret "jwt module"
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-dlsfls&v=5.3-6" --content-disposition  > /dev/null 2>&1
-  check_ret "dls module"
-  wget "http://oss.sonatype.org/service/local/artifact/maven/content?c=jar-with-dependencies&r=releases&g=com.floragunn&a=dlic-search-guard-module-kibana-multitenancy&v=5.4-4" --content-disposition  > /dev/null 2>&1
-  check_ret "multitenancy module"
   cd - > /dev/null 2>&1
 
   #dns seems to be broken on aws currently, so we need to disable hostname verification
@@ -161,8 +156,8 @@ do_install() {
   echo 'http.cors.allow-origin: "*"' >> $ES_CONF/elasticsearch.yml
   echo "cloud.aws.region: $REGION" >> $ES_CONF/elasticsearch.yml
   
-  echo "cluster.routing.allocation.disk.watermark.high: 10mb" >> $ES_CONF/elasticsearch.yml
-  echo "cluster.routing.allocation.disk.watermark.low: 10mb" >> $ES_CONF/elasticsearch.yml
+  #echo "cluster.routing.allocation.disk.watermark.high: 10mb" >> $ES_CONF/elasticsearch.yml
+  #echo "cluster.routing.allocation.disk.watermark.low: 10mb" >> $ES_CONF/elasticsearch.yml
   echo "node.name: $SG_PUBHOST" >> $ES_CONF/elasticsearch.yml
   echo "bootstrap.memory_lock: true" >> $ES_CONF/elasticsearch.yml
   echo "xpack.security.enabled: false" >> $ES_CONF/elasticsearch.yml
@@ -239,8 +234,8 @@ do_install() {
   
   dolog "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
   
-  chmod +x $ES_PLUGINS/search-guard-5/tools/sgadmin.sh
-  $ES_PLUGINS/search-guard-5/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PRIVHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=sgadmin-keystore.jks -nhnv
+  chmod +x $ES_PLUGINS/search-guard-6/tools/sgadmin.sh
+  $ES_PLUGINS/search-guard-6/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PRIVHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=sgadmin-keystore.jks -nhnv
   check_ret "running sgadmin"
   post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
   
@@ -258,18 +253,22 @@ do_install() {
     "message" : "rockn roll"
   }'
   
-  dolog "Install Kibana"
+  #dolog "Install Kibana"
 
-  cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
-  echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
-  /usr/share/kibana/bin/kibana-plugin install https://github.com/floragunncom/search-guard-kibana-plugin/releases/download/v5.5.1-3/searchguard-kibana-5.5.1-3.zip
-  /usr/share/kibana/bin/kibana-plugin install x-pack
+  #cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
+  #echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
+  #/usr/share/kibana/bin/kibana-plugin install https://github.com/floragunncom/search-guard-kibana-plugin/releases/download/v5.5.1-3/searchguard-kibana-5.5.1-3.zip
+  #/usr/share/kibana/bin/kibana-plugin install x-pack
 
 
-  /bin/systemctl enable kibana.service
-  check_ret
-  systemctl start kibana.service  
-  check_ret
+  #/bin/systemctl enable kibana.service
+  #check_ret
+  #systemctl start kibana.service  
+  #check_ret
+  
+  #dolog "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
+  
+  dolog "Install Metricbeat"
   
   cat /demo_root_ca/metricbeat/metricbeat.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/metricbeat/metricbeat.yml
 
@@ -277,9 +276,7 @@ do_install() {
   check_ret
   systemctl start metricbeat.service
   check_ret
-  
-  dolog "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
-    
+
   curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" > health 2>&1
   check_ret "final curl 1"
   curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" > authinfo 2>&1
