@@ -12,7 +12,7 @@ do_install() {
   #echo noop | tee /sys/block/xvdb/queue/scheduler
   
   export REGION=$(wget -qO- http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//' | tr -d '"')
-  export STACKNAME=$(aws ec2 describe-instances --filters "Name=ip-address,Values=$(ec2metadata --public-ipv4)" --region $REGION | jq '.Reservations[0].Instances[0].Tags | map(select (.Key == "aws:cloudformation:stack-name" )) ' | jq .[0].Value | tr -d '"')
+  export STACKNAME="sgaws" #$(aws ec2 describe-instances --filters "Name=ip-address,Values=$(ec2metadata --public-ipv4)" --region $REGION | jq '.Reservations[0].Instances[0].Tags | map(select (.Key == "aws:cloudformation:stack-name" )) ' | jq .[0].Value | tr -d '"')
   export SG_PUBHOST=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
   export SG_PRIVHOST=$(curl -s http://169.254.169.254/latest/meta-data/hostname)
   dolog "Will bootstrap $STACKNAME in $REGION on $SG_PUBHOST ($DIST)"
