@@ -70,9 +70,9 @@ do_install() {
   # heap size in MB
   let heapMB=$heapKB/1024
   
-  sed -i -e "s/-Xmx1g/-Xmx${heapMB}m/g" /etc/elasticsearch/jvm.options
-  sed -i -e "s/-Xms1g/-Xms${heapMB}m/g" /etc/elasticsearch/jvm.options
-  check_ret "xmx sed"
+  #sed -i -e "s/-Xmx1g/-Xmx${heapMB}m/g" /etc/elasticsearch/jvm.options
+  #sed -i -e "s/-Xms1g/-Xms${heapMB}m/g" /etc/elasticsearch/jvm.options
+  #check_ret "xmx sed"
   
   cat /etc/elasticsearch/jvm.options
   
