@@ -94,7 +94,9 @@ do_install() {
   
   $ES_BIN/elasticsearch-plugin install -b discovery-ec2 > /dev/null 
   check_ret "Installing discovery-ec2 plugin"
-  $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-6:$SG_VERSION > /dev/null 
+  wget -O /sg.zip https://oss.sonatype.org/content/repositories/comfloragunn-1179/com/floragunn/search-guard-6/6.0.0-17.beta1/search-guard-6-6.0.0-17.beta1.zip
+  $ES_BIN/elasticsearch-plugin install -b file:///sg.zip
+  #$ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-6:$SG_VERSION > /dev/null 
   check_ret "Installing SG plugin"
   $ES_BIN/elasticsearch-plugin install -b x-pack > /dev/null 
   check_ret "Installing xpack plugin"
@@ -226,7 +228,7 @@ do_install() {
   
   while ! nc -z $SG_PUBHOST 9200 > /dev/null 2>&1; do
     dolog "Wait for elasticsearch ..."
-    sleep 5
+    sleep 15
   done
   
   echo "elasticsearch up"
@@ -253,20 +255,20 @@ do_install() {
     "message" : "rockn roll"
   }'
   
-  #dolog "Install Kibana"
+  dolog "Install Kibana"
 
-  #cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
-  #echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
-  #/usr/share/kibana/bin/kibana-plugin install https://github.com/floragunncom/search-guard-kibana-plugin/releases/download/v5.5.1-3/searchguard-kibana-5.5.1-3.zip
-  #/usr/share/kibana/bin/kibana-plugin install x-pack
+  cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
+  echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
+  /usr/share/kibana/bin/kibana-plugin install https://oss.sonatype.org/content/repositories/snapshots/com/floragunn/search-guard-kibana-plugin/6.0.0-beta1-SNAPSHOT/search-guard-kibana-plugin-6.0.0-beta1-20171119.201707-3.zip
+  /usr/share/kibana/bin/kibana-plugin install x-pack
 
 
-  #/bin/systemctl enable kibana.service
-  #check_ret
-  #systemctl start kibana.service  
-  #check_ret
+  /bin/systemctl enable kibana.service
+  check_ret
+  systemctl start kibana.service  
+  check_ret
   
-  #dolog "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
+  dolog "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
   
   dolog "Install Metricbeat"
   
