@@ -42,20 +42,21 @@ xpack.reporting.enabled: false
 xpack.monitoring.enabled: true
 
 # SSL for outgoing requests from the Kibana Server to the browser (PEM formatted)
-server.ssl.cert: /etc/elasticsearch/kibana.crt.pem
+server.ssl.enabled: true
+server.ssl.certificate: /etc/elasticsearch/kibana.crt.pem
 server.ssl.key: /etc/elasticsearch/kibana.key
 
 # Optional setting to validate that your Elasticsearch backend uses the same key files (PEM formatted)
-elasticsearch.ssl.cert: /etc/elasticsearch/kibana.crt.pem
+elasticsearch.ssl.certificate: /etc/elasticsearch/kibana.crt.pem
 elasticsearch.ssl.key: /etc/elasticsearch/kibana.key
 
 # If you need to provide a CA certificate for your Elasticsearch instance, put
 # the path of the pem file here.
-elasticsearch.ssl.ca: /etc/elasticsearch/root-ca.pem
+elasticsearch.ssl.certificateAuthorities: ["/etc/elasticsearch/root-ca.pem"]
 
 # Set to false to have a complete disregard for the validity of the SSL
 # certificate.
-elasticsearch.ssl.verify: true
+elasticsearch.ssl.verificationMode: full
 
 # Time in milliseconds to wait for elasticsearch to respond to pings, defaults to
 # request_timeout setting
@@ -104,10 +105,10 @@ logging.quiet: true
 
 # make sense/dev tools work 
 # https://github.com/elastic/kibana/issues/7128
-console.proxyConfig:
- - match:
-    host: "*"
-    port: "{9200..9202}"
-
-   ssl:
-    ca: "/etc/elasticsearch/root-ca.pem"
+#console.proxyConfig:
+# - match:
+#    host: "*"
+#    port: "{9200..9202}"#
+#
+#   ssl:
+#   ca: "/etc/elasticsearch/root-ca.pem"

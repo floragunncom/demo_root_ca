@@ -163,7 +163,7 @@ do_install() {
   #echo "cluster.routing.allocation.disk.watermark.high: 10mb" >> $ES_CONF/elasticsearch.yml
   #echo "cluster.routing.allocation.disk.watermark.low: 10mb" >> $ES_CONF/elasticsearch.yml
   echo "node.name: $SG_PUBHOST" >> $ES_CONF/elasticsearch.yml
-  echo "bootstrap.memory_lock: true" >> $ES_CONF/elasticsearch.yml
+  #echo "bootstrap.memory_lock: true" >> $ES_CONF/elasticsearch.yml
   echo "xpack.security.enabled: false" >> $ES_CONF/elasticsearch.yml
   echo "xpack.watcher.enabled: false" >> $ES_CONF/elasticsearch.yml
   echo "xpack.monitoring.enabled: true" >> $ES_CONF/elasticsearch.yml
