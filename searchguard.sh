@@ -166,7 +166,7 @@ do_install() {
   #echo "bootstrap.memory_lock: true" >> $ES_CONF/elasticsearch.yml
   echo "xpack.security.enabled: false" >> $ES_CONF/elasticsearch.yml
   echo "xpack.watcher.enabled: false" >> $ES_CONF/elasticsearch.yml
-  echo "xpack.monitoring.enabled: true" >> $ES_CONF/elasticsearch.yml
+  echo "xpack.monitoring.enabled: false" >> $ES_CONF/elasticsearch.yml
   echo "xpack.ml.enabled: false" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
@@ -264,7 +264,7 @@ do_install() {
   cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
   echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
   /usr/share/kibana/bin/kibana-plugin install https://oss.sonatype.org/content/repositories/snapshots/com/floragunn/search-guard-kibana-plugin/6.0.0-beta1-SNAPSHOT/search-guard-kibana-plugin-6.0.0-beta1-20171119.201707-3.zip
-  /usr/share/kibana/bin/kibana-plugin install x-pack
+  #/usr/share/kibana/bin/kibana-plugin install x-pack
 
 
   /bin/systemctl enable kibana.service
