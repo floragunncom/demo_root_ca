@@ -202,7 +202,9 @@ do_install() {
   echo "searchguard.authcz.admin_dn:">> $ES_CONF/elasticsearch.yml
   echo "  - CN=sgadmin" >> $ES_CONF/elasticsearch.yml
   
-  echo "path.data: /mnt/esdata">> $ES_CONF/elasticsearch.yml
+  echo 'searchguard.restapi.roles_enabled: ["sg_all_access"]' >> $ES_CONF/elasticsearch.yml
+  echo "path.logs: /var/log/elasticsearch" >> $ES_CONF/elasticsearch.yml
+  echo "path.data: /mnt/esdata" >> $ES_CONF/elasticsearch.yml
   
   mkdir -p /mnt/esdata
   chown -R elasticsearch:elasticsearch /mnt/esdata
