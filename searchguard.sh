@@ -144,9 +144,11 @@ do_install() {
   #dns seems to be broken on aws currently, so we need to disable hostname verification
   echo "cluster.name: $STACKNAME" > $ES_CONF/elasticsearch.yml
   echo "discovery.zen.hosts_provider: ec2" >> $ES_CONF/elasticsearch.yml
-  echo "discovery.type: ec2" >> $ES_CONF/elasticsearch.yml
+  #echo "discovery.type: ec2" >> $ES_CONF/elasticsearch.yml
   echo "discovery.ec2.host_type: private_dns" >> $ES_CONF/elasticsearch.yml
-  echo "cloud.aws.protocol: http" >> $ES_CONF/elasticsearch.yml
+  echo "discovery.ec2.protocol: http" >> $ES_CONF/elasticsearch.yml
+  #echo "cloud.aws.region: $REGION" >> $ES_CONF/elasticsearch.yml
+  
   #echo 'network.host: ["_ec2:publicDns_"]' >> $ES_CONF/elasticsearch.yml
   echo "network.host: _ec2:privateDns_" >> $ES_CONF/elasticsearch.yml
   echo "transport.host: _ec2:privateDns_" >> $ES_CONF/elasticsearch.yml
@@ -156,7 +158,7 @@ do_install() {
   echo "http.port: 9200" >> $ES_CONF/elasticsearch.yml
   echo "http.cors.enabled: true" >> $ES_CONF/elasticsearch.yml
   echo 'http.cors.allow-origin: "*"' >> $ES_CONF/elasticsearch.yml
-  echo "cloud.aws.region: $REGION" >> $ES_CONF/elasticsearch.yml
+  
   
   #echo "cluster.routing.allocation.disk.watermark.high: 10mb" >> $ES_CONF/elasticsearch.yml
   #echo "cluster.routing.allocation.disk.watermark.low: 10mb" >> $ES_CONF/elasticsearch.yml
@@ -208,10 +210,10 @@ do_install() {
   echo "vm.max_map_count=262144" >> /etc/sysctl.conf
   echo 262144 > /proc/sys/vm/max_map_count 
   
-  mkdir -p /etc/systemd/system/elasticsearch.service.d
-  echo "[Service]" > /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
-  echo "LimitMEMLOCK=infinity" >> /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
-  echo "LimitNOFILE=1000000" >> /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
+  #mkdir -p /etc/systemd/system/elasticsearch.service.d
+  #echo "[Service]" > /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
+  #echo "LimitMEMLOCK=infinity" >> /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
+  #echo "LimitNOFILE=1000000" >> /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
   
   echo "MAX_LOCKED_MEMORY=unlimited" >> /etc/default/elasticsearch
   echo "MAX_OPEN_FILES=1000000" >> /etc/default/elasticsearch
