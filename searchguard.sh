@@ -134,10 +134,10 @@ do_install() {
   
   chmod -R 755 $ES_CONF
   
-  if [ ! -f "netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar" ]; then
-    wget -O $ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://search.maven.org/remotecontent?filepath=io/netty/netty-tcnative/$NETTY_NATIVE_VERSION/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar > /dev/null 2>&1
-    check_ret "Downloading netty native"
-  fi
+  #if [ ! -f "netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar" ]; then
+  #  wget -O $ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://search.maven.org/remotecontent?filepath=io/netty/netty-tcnative/$NETTY_NATIVE_VERSION/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar > /dev/null 2>&1
+  #  check_ret "Downloading netty native"
+  #fi
   
   cd - > /dev/null 2>&1
 
