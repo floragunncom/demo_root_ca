@@ -36,7 +36,7 @@ do_install() {
   #ssl_openssl_supports_key_manager_factory":false,"ssl_openssl_supports_hostname_validation":false
 
   ES_VERSION=6.0.0
-  SG_VERSION=$ES_VERSION-17.beta1api
+  SG_VERSION=$ES_VERSION-17.beta1
   
   if [ ! -f "elasticsearch-$ES_VERSION.deb" ]; then
     wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
@@ -94,9 +94,7 @@ do_install() {
   
   $ES_BIN/elasticsearch-plugin install -b discovery-ec2 > /dev/null 
   check_ret "Installing discovery-ec2 plugin"
-  wget -O /sg.zip https://oss.sonatype.org/content/repositories/comfloragunn-1179/com/floragunn/search-guard-6/6.0.0-17.beta1/search-guard-6-6.0.0-17.beta1.zip
-  $ES_BIN/elasticsearch-plugin install -b file:///sg.zip
-  #$ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-6:$SG_VERSION > /dev/null 
+  $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-6:$SG_VERSION > /dev/null 
   check_ret "Installing SG plugin"
   $ES_BIN/elasticsearch-plugin install -b x-pack > /dev/null 
   check_ret "Installing xpack plugin"
@@ -110,7 +108,7 @@ do_install() {
   
   ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PUBHOST" "$SG_PUBHOST" changeit "ca pass" > /dev/null 2>&1
   check_ret "generate certificate"
-  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PRIVHOST" "$SG_PRIVHOST" changeit "ca pass" > /dev/null 2>&1
+  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PRIVHOST" "$SG_PUBHOST" changeit "ca pass" > /dev/null 2>&1
   check_ret "generate certificate"
   ./gen_client_node_cert.sh "$ORG_NAME" "CN=user" changeit "ca pass" > /dev/null 2>&1
   check_ret "generate certificate"
@@ -159,6 +157,7 @@ do_install() {
   echo "http.cors.enabled: true" >> $ES_CONF/elasticsearch.yml
   echo 'http.cors.allow-origin: "*"' >> $ES_CONF/elasticsearch.yml
   
+  echo 'logger.org.elasticsearch.discovery.ec2: TRACE'  >> $ES_CONF/elasticsearch.yml
   
   #echo "cluster.routing.allocation.disk.watermark.high: 10mb" >> $ES_CONF/elasticsearch.yml
   #echo "cluster.routing.allocation.disk.watermark.low: 10mb" >> $ES_CONF/elasticsearch.yml
