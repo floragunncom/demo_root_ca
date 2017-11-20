@@ -108,7 +108,7 @@ do_install() {
   
   ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PUBHOST" "$SG_PUBHOST" changeit "ca pass" > /dev/null 2>&1
   check_ret "generate certificate"
-  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PRIVHOST" "$SG_PUBHOST" changeit "ca pass" > /dev/null 2>&1
+  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PRIVHOST" "$SG_PRIVHOST" changeit "ca pass" > /dev/null 2>&1
   check_ret "generate certificate"
   ./gen_client_node_cert.sh "$ORG_NAME" "CN=user" changeit "ca pass" > /dev/null 2>&1
   check_ret "generate certificate"
@@ -142,10 +142,9 @@ do_install() {
   #dns seems to be broken on aws currently, so we need to disable hostname verification
   echo "cluster.name: $STACKNAME" > $ES_CONF/elasticsearch.yml
   echo "discovery.zen.hosts_provider: ec2" >> $ES_CONF/elasticsearch.yml
-  #echo "discovery.type: ec2" >> $ES_CONF/elasticsearch.yml
   echo "discovery.ec2.host_type: public_dns" >> $ES_CONF/elasticsearch.yml
   echo "discovery.ec2.protocol: http" >> $ES_CONF/elasticsearch.yml
-  #echo "cloud.aws.region: $REGION" >> $ES_CONF/elasticsearch.yml
+  echo 'discovery.ec2.availability_zones: ["eu-west-1a","eu-west-1b","eu-west-1c"]' >> $ES_CONF/elasticsearch.yml
   
   #echo 'network.host: ["_ec2:publicDns_"]' >> $ES_CONF/elasticsearch.yml
   echo "network.host: _ec2:publicDns_" >> $ES_CONF/elasticsearch.yml
@@ -182,7 +181,7 @@ do_install() {
   echo "#                                                " >> $ES_CONF/elasticsearch.yml
   echo "##################################################" >> $ES_CONF/elasticsearch.yml	
   echo "searchguard.ssl.transport.enabled: true" >> $ES_CONF/elasticsearch.yml
-  echo "searchguard.ssl.transport.keystore_filepath: CN=$SG_PRIVHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.transport.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
   #echo "searchguard.ssl.transport.keystore_password: $KS_PASS" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.transport.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
   #echo "searchguard.ssl.transport.truststore_password: $TS_PASS" >> $ES_CONF/elasticsearch.yml
@@ -240,7 +239,7 @@ do_install() {
   dolog "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
   
   chmod +x $ES_PLUGINS/search-guard-6/tools/sgadmin.sh
-  $ES_PLUGINS/search-guard-6/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PRIVHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=sgadmin-keystore.jks -nhnv
+  $ES_PLUGINS/search-guard-6/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PUBHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=sgadmin-keystore.jks -nhnv
   check_ret "running sgadmin"
   post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
   
@@ -260,11 +259,10 @@ do_install() {
   
   dolog "Install Kibana"
 
-  cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
-  echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
   /usr/share/kibana/bin/kibana-plugin install https://oss.sonatype.org/content/repositories/snapshots/com/floragunn/search-guard-kibana-plugin/6.0.0-beta1-SNAPSHOT/search-guard-kibana-plugin-6.0.0-beta1-20171119.201707-3.zip
   /usr/share/kibana/bin/kibana-plugin install x-pack
-
+  cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
+  echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
 
   /bin/systemctl enable kibana.service
   check_ret
