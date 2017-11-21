@@ -17,8 +17,6 @@ do_install() {
   export SG_PRIVHOST=$(curl -s http://169.254.169.254/latest/meta-data/hostname)
   dolog "Will bootstrap $STACKNAME in $REGION on $SG_PUBHOST ($DIST)"
   
-  #GITHUB_URL="$(aws cloudformation describe-stacks --stack-name $STACKNAME  --region $REGION | jq '.Stacks[0].Parameters | map(select (.ParameterKey == "GithubUrl" ))[0].ParameterValue' | tr -d '"' )"
-  
   echo "Stopping services"
   
   systemctl stop kibana.service > /dev/null 2>&1
@@ -32,8 +30,6 @@ do_install() {
   pip3 install requests ndg-httpsclient --upgrade
   #pip3 install elasticsearch requests cryptography pyopenssl ndg-httpsclient pyasn1
   #esrally --track=logging --pipeline=benchmark-only --target-hosts=10.0.0.6:9200,10.0.0.7:9200,10.0.0.8:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
-
-  #ssl_openssl_supports_key_manager_factory":false,"ssl_openssl_supports_hostname_validation":false
 
   ES_VERSION=6.0.0
   SG_VERSION=$ES_VERSION-17.beta1
@@ -128,14 +124,13 @@ do_install() {
   cp *.key $ES_CONF/
   cp ca/*.pem $ES_CONF/
 
-  #chown -R elasticsearch:elasticsearch $ES_CONF
   chown -R elasticsearch:elasticsearch $ES_CONF
   
   chmod -R 755 $ES_CONF
   
   #static version which supports hnv
-  wget -O $ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-1.0.2l-static-2.0.5.Final-non-fedora-linux-x86_64.jar
-  check_ret "Downloading netty native"
+  #wget -O $ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-1.0.2l-static-2.0.5.Final-non-fedora-linux-x86_64.jar
+  #check_ret "Downloading netty native"
   
   #if [ ! -f "netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar" ]; then
   #  wget -O $ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://search.maven.org/remotecontent?filepath=io/netty/netty-tcnative/$NETTY_NATIVE_VERSION/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar > /dev/null 2>&1
@@ -148,10 +143,7 @@ do_install() {
   echo "cluster.name: $STACKNAME" > $ES_CONF/elasticsearch.yml
   echo "discovery.zen.hosts_provider: ec2" >> $ES_CONF/elasticsearch.yml
   echo "discovery.ec2.host_type: public_dns" >> $ES_CONF/elasticsearch.yml
-  #echo "discovery.ec2.protocol: http" >> $ES_CONF/elasticsearch.yml
   echo 'discovery.ec2.endpoint: ec2.eu-west-1.amazonaws.com' >> $ES_CONF/elasticsearch.yml
-  
-  #echo 'network.host: ["_ec2:publicDns_"]' >> $ES_CONF/elasticsearch.yml
   echo "network.host: _ec2:publicDns_" >> $ES_CONF/elasticsearch.yml
   echo "transport.host: _ec2:publicDns_" >> $ES_CONF/elasticsearch.yml
   echo "transport.tcp.port: 9300" >> $ES_CONF/elasticsearch.yml
@@ -162,11 +154,8 @@ do_install() {
   echo 'http.cors.allow-origin: "*"' >> $ES_CONF/elasticsearch.yml
   
   echo 'logger.org.elasticsearch.discovery.ec2: TRACE'  >> $ES_CONF/elasticsearch.yml
-  
-  #echo "cluster.routing.allocation.disk.watermark.high: 10mb" >> $ES_CONF/elasticsearch.yml
-  #echo "cluster.routing.allocation.disk.watermark.low: 10mb" >> $ES_CONF/elasticsearch.yml
   echo "node.name: $SG_PUBHOST" >> $ES_CONF/elasticsearch.yml
-  #echo "bootstrap.memory_lock: true" >> $ES_CONF/elasticsearch.yml
+  echo "bootstrap.memory_lock: true" >> $ES_CONF/elasticsearch.yml
   echo "xpack.security.enabled: false" >> $ES_CONF/elasticsearch.yml
   echo "xpack.watcher.enabled: false" >> $ES_CONF/elasticsearch.yml
   echo "xpack.monitoring.enabled: true" >> $ES_CONF/elasticsearch.yml
@@ -187,19 +176,13 @@ do_install() {
   echo "##################################################" >> $ES_CONF/elasticsearch.yml	
   echo "searchguard.ssl.transport.enabled: true" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.transport.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
-  #echo "searchguard.ssl.transport.keystore_password: $KS_PASS" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.transport.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
-  #echo "searchguard.ssl.transport.truststore_password: $TS_PASS" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.transport.enforce_hostname_verification: false" >> $ES_CONF/elasticsearch.yml
 
   echo "searchguard.ssl.http.enabled: true" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
-  #echo "searchguard.ssl.http.keystore_password: $KS_PASS" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
-  #echo "searchguard.ssl.http.truststore_password: $TS_PASS" >> $ES_CONF/elasticsearch.yml
 
-  #echo "searchguard.kerberos.krb5_filepath: /Users/temp/kerberos_ldap_environment/krb5.conf" >> $ES_CONF/elasticsearch.yml
-  #echo "searchguard.kerberos.acceptor_keytab_filepath: http_srv.keytab" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.audit.type: internal_elasticsearch" >> $ES_CONF/elasticsearch.yml
 
   echo "searchguard.authcz.admin_dn:">> $ES_CONF/elasticsearch.yml
@@ -208,6 +191,7 @@ do_install() {
   echo 'searchguard.restapi.roles_enabled: ["sg_all_access"]' >> $ES_CONF/elasticsearch.yml
   echo "path.logs: /var/log/elasticsearch" >> $ES_CONF/elasticsearch.yml
   echo "path.data: /mnt/esdata" >> $ES_CONF/elasticsearch.yml
+  echo "discovery.zen.minimum_master_nodes: 2" >> $ES_CONF/elasticsearch.yml
   
   mkdir -p /mnt/esdata
   chown -R elasticsearch:elasticsearch /mnt/esdata
@@ -215,10 +199,10 @@ do_install() {
   echo "vm.max_map_count=262144" >> /etc/sysctl.conf
   echo 262144 > /proc/sys/vm/max_map_count 
   
-  #mkdir -p /etc/systemd/system/elasticsearch.service.d
-  #echo "[Service]" > /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
-  #echo "LimitMEMLOCK=infinity" >> /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
-  #echo "LimitNOFILE=1000000" >> /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
+  mkdir -p /etc/systemd/system/elasticsearch.service.d
+  echo "[Service]" > /etc/systemd/system/elasticsearch.service.d/override.conf
+  echo "LimitMEMLOCK=infinity" >> /etc/systemd/system/elasticsearch.service.d/override.conf
+  echo "LimitNOFILE=1000000" >> /etc/systemd/system/elasticsearch.service.d/override.conf
   
   echo "MAX_LOCKED_MEMORY=unlimited" >> /etc/default/elasticsearch
   echo "MAX_OPEN_FILES=1000000" >> /etc/default/elasticsearch
@@ -271,6 +255,7 @@ do_install() {
   /usr/share/kibana/bin/kibana-plugin install x-pack
   cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
   echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
+  chown -R kibana /usr/share/kibana/
 
   /bin/systemctl enable kibana.service
   systemctl start kibana.service  
