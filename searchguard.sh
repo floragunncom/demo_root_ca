@@ -25,7 +25,7 @@ do_install() {
   systemctl stop metricbeat.service > /dev/null 2>&1
   systemctl stop elasticsearch.service > /dev/null 2>&1
   
-  dolog "Install packages"
+  #dolog "Install packages"
   
   #apt install -yqq python3-pip
   pip3 install esrally
@@ -70,6 +70,8 @@ do_install() {
   # heap size in MB
   let heapMB=$heapKB/1024
   
+  dolog "Half Ram: ${heapMB}m"
+  
   #sed -i -e "s/-Xmx1g/-Xmx${heapMB}m/g" /etc/elasticsearch/jvm.options
   #sed -i -e "s/-Xms1g/-Xms${heapMB}m/g" /etc/elasticsearch/jvm.options
   #check_ret "xmx sed"
@@ -102,7 +104,7 @@ do_install() {
   cd /demo_root_ca
   git pull > /dev/null 2>&1
   
-  dolog "Generate certificates"
+  #dolog "Generate certificates"
   cp truststore.jks truststore.jks.orig
   rm -rf *.jks *.p12 *.pem *.csr *.key
   
@@ -132,6 +134,10 @@ do_install() {
   
   chmod -R 755 $ES_CONF
   
+  #static version which supports hnv
+  wget -O $ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-1.0.2l-static-2.0.5.Final-non-fedora-linux-x86_64.jar
+  check_ret "Downloading netty native"
+  
   #if [ ! -f "netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar" ]; then
   #  wget -O $ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://search.maven.org/remotecontent?filepath=io/netty/netty-tcnative/$NETTY_NATIVE_VERSION/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar > /dev/null 2>&1
   #  check_ret "Downloading netty native"
@@ -143,8 +149,8 @@ do_install() {
   echo "cluster.name: $STACKNAME" > $ES_CONF/elasticsearch.yml
   echo "discovery.zen.hosts_provider: ec2" >> $ES_CONF/elasticsearch.yml
   echo "discovery.ec2.host_type: public_dns" >> $ES_CONF/elasticsearch.yml
-  echo "discovery.ec2.protocol: http" >> $ES_CONF/elasticsearch.yml
-  echo 'discovery.ec2.availability_zones: ["eu-west-1a","eu-west-1b","eu-west-1c"]' >> $ES_CONF/elasticsearch.yml
+  #echo "discovery.ec2.protocol: http" >> $ES_CONF/elasticsearch.yml
+  echo 'endpoint: ec2.eu-west-1.amazonaws.com' >> $ES_CONF/elasticsearch.yml
   
   #echo 'network.host: ["_ec2:publicDns_"]' >> $ES_CONF/elasticsearch.yml
   echo "network.host: _ec2:publicDns_" >> $ES_CONF/elasticsearch.yml
@@ -228,6 +234,8 @@ do_install() {
   systemctl start elasticsearch.service
   check_ret "start elasticsearch.service"
   
+  sleep 15
+  
   while ! nc -z $SG_PUBHOST 9200 > /dev/null 2>&1; do
     dolog "Wait for elasticsearch ..."
     sleep 15
@@ -243,21 +251,21 @@ do_install() {
   check_ret "running sgadmin"
   post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
   
-  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter/tweet/1?pretty" -d'
+  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter/tweet/1?pretty" -H'Content-Type: application/json' -d'
   {
     "user" : "searchguard",
     "post_date" : "2013-11-15T14:12:12",
     "message" : "rockn roll"
   }'
 
-  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter1/tweet/1?pretty" -d'
+  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter1/tweet/1?pretty" -H'Content-Type: application/json' -d'
   {
     "user" : "searchguard1",
     "post_date" : "2015-11-15T14:12:12",
     "message" : "rockn roll"
   }'
   
-  dolog "Install Kibana"
+  #dolog "Install Kibana"
 
   /usr/share/kibana/bin/kibana-plugin install https://oss.sonatype.org/content/repositories/snapshots/com/floragunn/search-guard-kibana-plugin/6.0.0-beta1-SNAPSHOT/search-guard-kibana-plugin-6.0.0-beta1-20171119.201707-3.zip
   /usr/share/kibana/bin/kibana-plugin install x-pack
@@ -265,27 +273,22 @@ do_install() {
   echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
 
   /bin/systemctl enable kibana.service
-  check_ret
   systemctl start kibana.service  
-  check_ret
   
   dolog "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
   
-  dolog "Install Metricbeat"
+  #dolog "Install Metricbeat"
   
   cat /demo_root_ca/metricbeat/metricbeat.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/metricbeat/metricbeat.yml
 
   /bin/systemctl enable metricbeat.service
-  check_ret
   systemctl start metricbeat.service
-  check_ret
+  
+  dolog "Pre Finished"
 
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" > health 2>&1
-  check_ret "final curl 1"
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" > authinfo 2>&1
-  check_ret "final curl 2"
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" > sslinfo 2>&1
-  check_ret "final curl 3"
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" -H'Content-Type: application/json' > health 2>&1
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" -H'Content-Type: application/json' > authinfo 2>&1
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" -H'Content-Type: application/json' > sslinfo 2>&1
   
   cat authinfo
   cat sslinfo
@@ -294,6 +297,8 @@ do_install() {
   dolog "Authinfo: $(cat authinfo)"
   dolog "SSL Info: $(cat sslinfo)"
   dolog "Cluster Health: $(cat health)"
+  
+  dolog "Finished"
   
 }
 
