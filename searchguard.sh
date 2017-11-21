@@ -267,7 +267,7 @@ do_install() {
   
   #dolog "Install Kibana"
 
-  /usr/share/kibana/bin/kibana-plugin install https://oss.sonatype.org/content/repositories/snapshots/com/floragunn/search-guard-kibana-plugin/6.0.0-beta1-SNAPSHOT/search-guard-kibana-plugin-6.0.0-beta1-20171119.201707-3.zip
+  /usr/share/kibana/bin/kibana-plugin install https://oss.sonatype.org/content/repositories/releases/com/floragunn/search-guard-kibana-plugin/6.0.0-6.beta1/search-guard-kibana-plugin-6.0.0-6.beta1.zip
   /usr/share/kibana/bin/kibana-plugin install x-pack
   cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
   echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
