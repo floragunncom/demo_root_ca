@@ -72,11 +72,10 @@ do_install() {
   
   dolog "Half Ram: ${heapMB}m"
   
-  #sed -i -e "s/-Xmx1g/-Xmx${heapMB}m/g" /etc/elasticsearch/jvm.options
-  #sed -i -e "s/-Xms1g/-Xms${heapMB}m/g" /etc/elasticsearch/jvm.options
-  #check_ret "xmx sed"
+  sed -i -e "s/-Xmx1g/-Xmx${heapMB}m/g" /etc/elasticsearch/jvm.options
+  sed -i -e "s/-Xms1g/-Xms${heapMB}m/g" /etc/elasticsearch/jvm.options
   
-  cat /etc/elasticsearch/jvm.options
+  dolog "$(cat /etc/elasticsearch/jvm.options)"
   
   NETTY_NATIVE_VERSION=2.0.5.Final
   NETTY_NATIVE_CLASSIFIER=linux-x86_64
@@ -150,7 +149,7 @@ do_install() {
   echo "discovery.zen.hosts_provider: ec2" >> $ES_CONF/elasticsearch.yml
   echo "discovery.ec2.host_type: public_dns" >> $ES_CONF/elasticsearch.yml
   #echo "discovery.ec2.protocol: http" >> $ES_CONF/elasticsearch.yml
-  echo 'endpoint: ec2.eu-west-1.amazonaws.com' >> $ES_CONF/elasticsearch.yml
+  echo 'discovery.ec2.endpoint: ec2.eu-west-1.amazonaws.com' >> $ES_CONF/elasticsearch.yml
   
   #echo 'network.host: ["_ec2:publicDns_"]' >> $ES_CONF/elasticsearch.yml
   echo "network.host: _ec2:publicDns_" >> $ES_CONF/elasticsearch.yml
@@ -234,11 +233,12 @@ do_install() {
   systemctl start elasticsearch.service
   check_ret "start elasticsearch.service"
   
-  sleep 15
+  sleep 25
   
   while ! nc -z $SG_PUBHOST 9200 > /dev/null 2>&1; do
     dolog "Wait for elasticsearch ..."
     sleep 15
+    dolog "$(cat /var/log/elasticsearch/*)"
   done
   
   echo "elasticsearch up"
