@@ -12,11 +12,12 @@ do_install() {
   #Overwrite complete mounts as xvdb is mounted at /mnt by default
   #echo "/dev/xvdb /mnt ext4 defaults,noatime,nodiratime,discard   0   0" >> /etc/fstab
 
-  dolog "$(cat /etc/fstab)"
-  dolog "$(mount | grep mnt)"
+  #dolog "$(cat /etc/fstab)"
+  #dolog "$(mount | grep mnt)"
 
   #mount /dev/xvdb /mnt -o defaults,noatime,nodiratime,discard
   #echo noop | tee /sys/block/xvdb/queue/scheduler
+  mount -a
   
   export REGION=$(wget -qO- http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//' | tr -d '"')
   export STACKNAME="sgaws" #$(aws ec2 describe-instances --filters "Name=ip-address,Values=$(ec2metadata --public-ipv4)" --region $REGION | jq '.Reservations[0].Instances[0].Tags | map(select (.Key == "aws:cloudformation:stack-name" )) ' | jq .[0].Value | tr -d '"')
@@ -80,12 +81,12 @@ do_install() {
   # heap size in MB
   let heapMB=$heapKB/1024
   
-  dolog "Half Ram: ${heapMB}m"
+  #dolog "Half Ram: ${heapMB}m"
   
   sed -i -e "s/-Xmx1g/-Xmx${heapMB}m/g" /etc/elasticsearch/jvm.options
   sed -i -e "s/-Xms1g/-Xms${heapMB}m/g" /etc/elasticsearch/jvm.options
   
-  dolog "$(cat /etc/elasticsearch/jvm.options)"
+  #dolog "$(cat /etc/elasticsearch/jvm.options)"
   
   NETTY_NATIVE_VERSION=2.0.5.Final
   NETTY_NATIVE_CLASSIFIER=linux-x86_64
@@ -224,17 +225,16 @@ do_install() {
   
   echo "elasticsearch  -  nofile  1000000" >> /etc/security/limits.conf
   
-  
+  #filebeat  
   cat /demo_root_ca/filebeat/filebeat.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/filebeat/filebeat.yml
+
+  /bin/systemctl daemon-reload
 
   /bin/systemctl enable filebeat.service
   systemctl start filebeat.service
-  
-  
-  
-  
-    
-  /bin/systemctl daemon-reload
+  #filebeat end
+
+ 
   check_ret "daemon-reload"
   /bin/systemctl enable elasticsearch.service
   check_ret "enable elasticsearch.service"
@@ -292,13 +292,12 @@ do_install() {
 
   /bin/systemctl enable metricbeat.service
   systemctl start metricbeat.service
-  
-  dolog "Pre Finished"
 
   curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" -H'Content-Type: application/json' > /tmp/health 2>&1
   curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" -H'Content-Type: application/json' > /tmp/authinfo 2>&1
   curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" -H'Content-Type: application/json' > /tmp/sslinfo 2>&1
   
+  dolog "ls: $(ls -la /tmp)"
   dolog "Authinfo: $(cat /tmp/authinfo)"
   dolog "SSL Info: $(cat /tmp/sslinfo)"
   dolog "Cluster Health: $(cat /tmp/health)"

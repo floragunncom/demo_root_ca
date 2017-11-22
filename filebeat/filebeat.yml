@@ -3,6 +3,7 @@ filebeat.prospectors:
   enabled: true
   paths:
     - /var/log/elasticsearch/*.log
+    - /var/log/cloud-init-output.log
 
 output.elasticsearch:
   username: logstash
