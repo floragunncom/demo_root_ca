@@ -1,0 +1,15 @@
+filebeat.prospectors:
+- type: log
+  enabled: true
+  paths:
+    - /var/log/elasticsearch/*.log
+
+output.elasticsearch:
+  username: logstash
+  password: logstash
+  protocol: https
+  hosts: ["RPLC_HOST"]
+  ssl.certificate_authorities:
+    - "/etc/elasticsearch/chain-ca.pem"
+  ssl.certificate: "/etc/elasticsearch/topbeat.crt.pem"
+  ssl.key: "/etc/elasticsearch/topbeat.key"

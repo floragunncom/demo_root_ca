@@ -8,7 +8,14 @@ post_slack() {
 do_install() {
 
   mkfs -t ext4 -V /dev/xvdb
-  mount /dev/xvdb /mnt -o defaults,noatime,nodiratime,discard
+
+  #Overwrite complete mounts as xvdb is mounted at /mnt by default
+  #echo "/dev/xvdb /mnt ext4 defaults,noatime,nodiratime,discard   0   0" >> /etc/fstab
+
+  dolog "$(cat /etc/fstab)"
+  dolog "$(mount | grep mnt)"
+
+  #mount /dev/xvdb /mnt -o defaults,noatime,nodiratime,discard
   #echo noop | tee /sys/block/xvdb/queue/scheduler
   
   export REGION=$(wget -qO- http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//' | tr -d '"')
@@ -22,6 +29,7 @@ do_install() {
   systemctl stop kibana.service > /dev/null 2>&1
   systemctl stop metricbeat.service > /dev/null 2>&1
   systemctl stop elasticsearch.service > /dev/null 2>&1
+  systemctl stop filebeat.service > /dev/null 2>&1
   
   #dolog "Install packages"
   
@@ -47,6 +55,12 @@ do_install() {
   
   dpkg --force-all -i metricbeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
   check_ret "Installing Metricbeat"
+  
+  wget https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
+  check_ret "Downloading filebeat"
+  
+  dpkg --force-all -i filebeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
+  check_ret "Installing filebeat"
   
   wget https://artifacts.elastic.co/downloads/kibana/kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
   check_ret "Downloading Kibana"
@@ -209,6 +223,16 @@ do_install() {
   echo "MAX_MAP_COUNT=262144"  >> /etc/default/elasticsearch
   
   echo "elasticsearch  -  nofile  1000000" >> /etc/security/limits.conf
+  
+  
+  cat /demo_root_ca/filebeat/filebeat.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/filebeat/filebeat.yml
+
+  /bin/systemctl enable filebeat.service
+  systemctl start filebeat.service
+  
+  
+  
+  
     
   /bin/systemctl daemon-reload
   check_ret "daemon-reload"
@@ -271,17 +295,13 @@ do_install() {
   
   dolog "Pre Finished"
 
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" -H'Content-Type: application/json' > health 2>&1
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" -H'Content-Type: application/json' > authinfo 2>&1
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" -H'Content-Type: application/json' > sslinfo 2>&1
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" -H'Content-Type: application/json' > /tmp/health 2>&1
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" -H'Content-Type: application/json' > /tmp/authinfo 2>&1
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" -H'Content-Type: application/json' > /tmp/sslinfo 2>&1
   
-  cat authinfo
-  cat sslinfo
-  cat health
-  
-  dolog "Authinfo: $(cat authinfo)"
-  dolog "SSL Info: $(cat sslinfo)"
-  dolog "Cluster Health: $(cat health)"
+  dolog "Authinfo: $(cat /tmp/authinfo)"
+  dolog "SSL Info: $(cat /tmp/sslinfo)"
+  dolog "Cluster Health: $(cat /tmp/health)"
   
   dolog "Finished"
   
