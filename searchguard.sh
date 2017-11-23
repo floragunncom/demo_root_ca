@@ -1,5 +1,9 @@
 #!/bin/bash
 set -x
+SG_DISABLED="true"
+MYML="metricbeat_nossl.yml"
+FYML="filebeat_nossl.yml"
+KYML="kibana_nossl.yml"
 
 post_slack() {
    curl -X POST --data-urlencode 'payload={"channel": "#aws_notify", "username": "awsbot", "text": "'"$1"'", "icon_emoji": ":cyclone:"}' $SLACKURL > /dev/null 2>&1
@@ -35,10 +39,16 @@ do_install() {
   #dolog "Install packages"
   
   #apt install -yqq python3-pip
-  pip3 install esrally
-  pip3 install requests ndg-httpsclient --upgrade
+  #pip3 install esrally
+  #pip3 install requests ndg-httpsclient --upgrade
   #pip3 install elasticsearch requests cryptography pyopenssl ndg-httpsclient pyasn1
-  #esrally --track=logging --pipeline=benchmark-only --target-hosts=10.0.0.6:9200,10.0.0.7:9200,10.0.0.8:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
+  #esrally --track=logging --report-file="~/report-$(date).md" --report-format=csv --pipeline=benchmark-only --target-hosts=https://ec2-34-253-194-30.eu-west-1.compute.amazonaws.com:9200,https://ec2-54-154-99-160.eu-west-1.compute.amazonaws.com:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
+  #esrally --track=logging --pipeline=benchmark-only --target-hosts=$(hostname -f):9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
+  #nyc_taxis
+  #percolator
+  #--report-file=/path/to/your/report.md
+  #--report-format=csv
+  #--test-mode
 
   ES_VERSION=6.0.0
   SG_VERSION=$ES_VERSION-17.beta1
@@ -106,8 +116,11 @@ do_install() {
   
   $ES_BIN/elasticsearch-plugin install -b discovery-ec2 > /dev/null 
   check_ret "Installing discovery-ec2 plugin"
+  
+  #INSTALL PLUGIN
   $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-6:$SG_VERSION > /dev/null 
   check_ret "Installing SG plugin"
+  
   $ES_BIN/elasticsearch-plugin install -b x-pack > /dev/null 
   check_ret "Installing xpack plugin"
   
@@ -171,6 +184,9 @@ do_install() {
   echo 'logger.org.elasticsearch.discovery.ec2: TRACE'  >> $ES_CONF/elasticsearch.yml
   echo "node.name: $SG_PUBHOST" >> $ES_CONF/elasticsearch.yml
   echo "bootstrap.memory_lock: true" >> $ES_CONF/elasticsearch.yml
+  echo "path.logs: /var/log/elasticsearch" >> $ES_CONF/elasticsearch.yml
+  echo "path.data: /mnt/esdata" >> $ES_CONF/elasticsearch.yml
+  echo "discovery.zen.minimum_master_nodes: 2" >> $ES_CONF/elasticsearch.yml
   echo "xpack.security.enabled: false" >> $ES_CONF/elasticsearch.yml
   echo "xpack.watcher.enabled: false" >> $ES_CONF/elasticsearch.yml
   echo "xpack.monitoring.enabled: true" >> $ES_CONF/elasticsearch.yml
@@ -179,6 +195,8 @@ do_install() {
   echo "" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
+  
+  echo "searchguard.disabled: $SG_DISABLED" >> $ES_CONF/elasticsearch.yml
   echo "##################################################" >> $ES_CONF/elasticsearch.yml
   echo "#          Search Guard 5 configuration          " >> $ES_CONF/elasticsearch.yml
   echo "#                                                " >> $ES_CONF/elasticsearch.yml
@@ -204,9 +222,7 @@ do_install() {
   echo "  - CN=sgadmin" >> $ES_CONF/elasticsearch.yml
   
   echo 'searchguard.restapi.roles_enabled: ["sg_all_access"]' >> $ES_CONF/elasticsearch.yml
-  echo "path.logs: /var/log/elasticsearch" >> $ES_CONF/elasticsearch.yml
-  echo "path.data: /mnt/esdata" >> $ES_CONF/elasticsearch.yml
-  echo "discovery.zen.minimum_master_nodes: 2" >> $ES_CONF/elasticsearch.yml
+
   
   mkdir -p /mnt/esdata
   chown -R elasticsearch:elasticsearch /mnt/esdata
@@ -226,7 +242,7 @@ do_install() {
   echo "elasticsearch  -  nofile  1000000" >> /etc/security/limits.conf
   
   #filebeat  
-  cat /demo_root_ca/filebeat/filebeat.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/filebeat/filebeat.yml
+  cat "/demo_root_ca/filebeat/$FYML" | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/filebeat/filebeat.yml
 
   /bin/systemctl daemon-reload
 
@@ -252,33 +268,44 @@ do_install() {
   echo "elasticsearch up"
   sleep 5
   
-  dolog "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
   
-  chmod +x $ES_PLUGINS/search-guard-6/tools/sgadmin.sh
-  $ES_PLUGINS/search-guard-6/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PUBHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=sgadmin-keystore.jks -nhnv
-  check_ret "running sgadmin"
-  post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
+  if [ "$SG_DISABLED" == "false" ]; then
   
-  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter/tweet/1?pretty" -H'Content-Type: application/json' -d'
-  {
-    "user" : "searchguard",
-    "post_date" : "2013-11-15T14:12:12",
-    "message" : "rockn roll"
-  }'
+     dolog "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
+  
+     chmod +x $ES_PLUGINS/search-guard-6/tools/sgadmin.sh
+     $ES_PLUGINS/search-guard-6/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PUBHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=sgadmin-keystore.jks -nhnv
+     check_ret "running sgadmin"
+     post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
+  
+  
+	  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter/tweet/1?pretty" -H'Content-Type: application/json' -d'
+	  {
+		"user" : "searchguard",
+		"post_date" : "2013-11-15T14:12:12",
+		"message" : "rockn roll"
+	  }'
 
-  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter1/tweet/1?pretty" -H'Content-Type: application/json' -d'
-  {
-    "user" : "searchguard1",
-    "post_date" : "2015-11-15T14:12:12",
-    "message" : "rockn roll"
-  }'
+	  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter1/tweet/1?pretty" -H'Content-Type: application/json' -d'
+	  {
+		"user" : "searchguard1",
+		"post_date" : "2015-11-15T14:12:12",
+		"message" : "rockn roll"
+	  }'
+  
+  fi
+  
+  
   
   #dolog "Install Kibana"
 
-  /usr/share/kibana/bin/kibana-plugin install https://oss.sonatype.org/content/repositories/releases/com/floragunn/search-guard-kibana-plugin/6.0.0-6.beta1/search-guard-kibana-plugin-6.0.0-6.beta1.zip
+   if [ "$SG_DISABLED" == "false" ]; then
+      /usr/share/kibana/bin/kibana-plugin install https://oss.sonatype.org/content/repositories/releases/com/floragunn/search-guard-kibana-plugin/6.0.0-6.beta1/search-guard-kibana-plugin-6.0.0-6.beta1.zip
+   fi
+  
   /usr/share/kibana/bin/kibana-plugin install x-pack
-  cat /demo_root_ca/kibana/kibana.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
-  echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
+  cat "/demo_root_ca/kibana/$KYML" | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
+  #echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
   chown -R kibana /usr/share/kibana/
 
   /bin/systemctl enable kibana.service
@@ -288,19 +315,20 @@ do_install() {
   
   #dolog "Install Metricbeat"
   
-  cat /demo_root_ca/metricbeat/metricbeat.yml | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/metricbeat/metricbeat.yml
+  cat "/demo_root_ca/metricbeat/$MYML" | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/metricbeat/metricbeat.yml
 
   /bin/systemctl enable metricbeat.service
   systemctl start metricbeat.service
+  
+  if [ "$SG_DISABLED" == "false" ]; then
 
   curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" -H'Content-Type: application/json' > /tmp/health 2>&1
   curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" -H'Content-Type: application/json' > /tmp/authinfo 2>&1
   curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" -H'Content-Type: application/json' > /tmp/sslinfo 2>&1
   
-  dolog "ls: $(ls -la /tmp)"
-  dolog "Authinfo: $(cat /tmp/authinfo)"
-  dolog "SSL Info: $(cat /tmp/sslinfo)"
-  dolog "Cluster Health: $(cat /tmp/health)"
+  dolog "$(cat /tmp/health)"
+  fi
+  
   
   dolog "Finished"
   

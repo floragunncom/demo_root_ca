@@ -1,0 +1,21 @@
+output.elasticsearch:
+  #workaround for 5.0.0 where template is missing
+  #template.enabled: false
+  username: logstash
+  password: logstash
+  protocol: http
+  hosts: ["RPLC_HOST"]
+
+metricbeat.modules:
+- module: system
+  metricsets:
+    - cpu
+    - load
+    - memory
+    - process
+  enabled: true
+  period: 10s
+  processes: ['.*']
+
+#output.console:
+#  pretty: true
