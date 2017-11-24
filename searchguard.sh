@@ -1,6 +1,7 @@
 #!/bin/bash
 set -x
 SG_DISABLED="false"
+SG_SSLONLY="true"
 MYML="metricbeat.yml"
 FYML="filebeat.yml"
 KYML="kibana.yml"
@@ -12,15 +13,6 @@ post_slack() {
 do_install() {
 
   mkfs -t ext4 -V /dev/xvdb
-
-  #Overwrite complete mounts as xvdb is mounted at /mnt by default
-  #echo "/dev/xvdb /mnt ext4 defaults,noatime,nodiratime,discard   0   0" >> /etc/fstab
-
-  #dolog "$(cat /etc/fstab)"
-  #dolog "$(mount | grep mnt)"
-
-  #mount /dev/xvdb /mnt -o defaults,noatime,nodiratime,discard
-  #echo noop | tee /sys/block/xvdb/queue/scheduler
   mount -a
   
   export REGION=$(wget -qO- http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//' | tr -d '"')
@@ -49,9 +41,11 @@ do_install() {
   #--report-file=/path/to/your/report.md
   #--report-format=csv
   #--test-mode
+  #nohup esrally --track=logging --report-file="~/report-$(date).md" --report-format=csv --pipeline=benchmark-only --target-hosts=https://ec2-34-253-234-70.eu-west-1.compute.amazonaws.com:9200,https://ec2-54-154-62-50.eu-west-1.compute.amazonaws.com:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'" &
 
   ES_VERSION=6.0.0
   SG_VERSION=$ES_VERSION-17.beta1
+  SGSSL_VERSION=$ES_VERSION-24.beta1
   
   if [ ! -f "elasticsearch-$ES_VERSION.deb" ]; then
     wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
@@ -112,13 +106,20 @@ do_install() {
   
   $ES_BIN/elasticsearch-plugin remove discovery-ec2 > /dev/null 2>&1
   $ES_BIN/elasticsearch-plugin remove search-guard-6 > /dev/null 2>&1
+  $ES_BIN/elasticsearch-plugin remove search-guard-ssl > /dev/null 2>&1
   $ES_BIN/elasticsearch-plugin remove x-pack > /dev/null 2>&1
   
   $ES_BIN/elasticsearch-plugin install -b discovery-ec2 > /dev/null 
   check_ret "Installing discovery-ec2 plugin"
   
   #INSTALL PLUGIN
+  if [ "$SG_SSLONLY" == "true" ];then
+  $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-ssl:$SGSSL_VERSION > /dev/null 
+  else
+  
   $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-6:$SG_VERSION > /dev/null 
+  fi
+  
   check_ret "Installing SG plugin"
   
   $ES_BIN/elasticsearch-plugin install -b x-pack > /dev/null 
@@ -216,13 +217,17 @@ do_install() {
   echo "searchguard.ssl.http.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
 
-  echo "searchguard.audit.type: internal_elasticsearch" >> $ES_CONF/elasticsearch.yml
 
-  echo "searchguard.authcz.admin_dn:">> $ES_CONF/elasticsearch.yml
-  echo "  - CN=sgadmin" >> $ES_CONF/elasticsearch.yml
+  if [ "$SG_SSLONLY" == "false" ];then
+
+	  echo "searchguard.audit.type: internal_elasticsearch" >> $ES_CONF/elasticsearch.yml
+
+	  echo "searchguard.authcz.admin_dn:">> $ES_CONF/elasticsearch.yml
+	  echo "  - CN=sgadmin" >> $ES_CONF/elasticsearch.yml
   
-  echo 'searchguard.restapi.roles_enabled: ["sg_all_access"]' >> $ES_CONF/elasticsearch.yml
+	  echo 'searchguard.restapi.roles_enabled: ["sg_all_access"]' >> $ES_CONF/elasticsearch.yml
 
+  fi
   
   mkdir -p /mnt/esdata
   chown -R elasticsearch:elasticsearch /mnt/esdata
@@ -269,7 +274,7 @@ do_install() {
   sleep 5
   
   
-  if [ "$SG_DISABLED" == "false" ]; then
+  if [ "$SG_DISABLED" == "false" ] && [ "$SG_SSLONLY" == "false" ]; then
   
      dolog "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
   
@@ -299,7 +304,7 @@ do_install() {
   
   #dolog "Install Kibana"
 
-   if [ "$SG_DISABLED" == "false" ]; then
+   if [ "$SG_DISABLED" == "false" ] && [ "$SG_SSLONLY" == "false" ]; then
       /usr/share/kibana/bin/kibana-plugin install https://oss.sonatype.org/content/repositories/releases/com/floragunn/search-guard-kibana-plugin/6.0.0-6.beta1/search-guard-kibana-plugin-6.0.0-6.beta1.zip
    fi
   
@@ -319,17 +324,6 @@ do_install() {
 
   /bin/systemctl enable metricbeat.service
   systemctl start metricbeat.service
-  
-  if [ "$SG_DISABLED" == "false" ]; then
-
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" -H'Content-Type: application/json' > /tmp/health 2>&1
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" -H'Content-Type: application/json' > /tmp/authinfo 2>&1
-  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" -H'Content-Type: application/json' > /tmp/sslinfo 2>&1
-  
-  dolog "$(cat /tmp/health)"
-  fi
-  
-  
   dolog "Finished"
   
 }
