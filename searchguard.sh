@@ -196,7 +196,7 @@ do_install() {
   echo "" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
   
-  echo "searchguard.disabled: $SG_DISABLED" >> $ES_CONF/elasticsearch.yml
+  
   echo "##################################################" >> $ES_CONF/elasticsearch.yml
   echo "#          Search Guard 5 configuration          " >> $ES_CONF/elasticsearch.yml
   echo "#                                                " >> $ES_CONF/elasticsearch.yml
@@ -218,6 +218,8 @@ do_install() {
 
 
   if [ "$SG_SSLONLY" == "false" ]; then
+  
+      echo "searchguard.disabled: $SG_DISABLED" >> $ES_CONF/elasticsearch.yml
 
 	  echo "searchguard.audit.type: internal_elasticsearch" >> $ES_CONF/elasticsearch.yml
 
