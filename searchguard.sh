@@ -45,7 +45,7 @@ do_install() {
 
   ES_VERSION=6.0.0
   SG_VERSION=$ES_VERSION-17.beta1
-  SGSSL_VERSION=$ES_VERSION-24.beta1
+  SGSSL_VERSION=$ES_VERSION-24.beta1.1
   
   if [ ! -f "elasticsearch-$ES_VERSION.deb" ]; then
     wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
