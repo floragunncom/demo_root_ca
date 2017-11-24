@@ -1,9 +1,9 @@
 #!/bin/bash
 set -x
-SG_DISABLED="true"
-MYML="metricbeat_nossl.yml"
-FYML="filebeat_nossl.yml"
-KYML="kibana_nossl.yml"
+SG_DISABLED="false"
+MYML="metricbeat.yml"
+FYML="filebeat.yml"
+KYML="kibana.yml"
 
 post_slack() {
    curl -X POST --data-urlencode 'payload={"channel": "#aws_notify", "username": "awsbot", "text": "'"$1"'", "icon_emoji": ":cyclone:"}' $SLACKURL > /dev/null 2>&1
