@@ -113,11 +113,10 @@ do_install() {
   check_ret "Installing discovery-ec2 plugin"
   
   #INSTALL PLUGIN
-  if [ "$SG_SSLONLY" == "true" ];then
-  $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-ssl:$SGSSL_VERSION > /dev/null 
+  if [ "$SG_SSLONLY" == "true" ]; then
+      $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-ssl:$SGSSL_VERSION
   else
-  
-  $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-6:$SG_VERSION > /dev/null 
+      $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-6:$SG_VERSION > /dev/null 
   fi
   
   check_ret "Installing SG plugin"
@@ -218,7 +217,7 @@ do_install() {
   echo "searchguard.ssl.http.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
 
 
-  if [ "$SG_SSLONLY" == "false" ];then
+  if [ "$SG_SSLONLY" == "false" ]; then
 
 	  echo "searchguard.audit.type: internal_elasticsearch" >> $ES_CONF/elasticsearch.yml
 
