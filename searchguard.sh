@@ -43,10 +43,6 @@ do_install() {
   #pip3 install requests ndg-httpsclient --upgrade
   #pip3 install elasticsearch requests cryptography pyopenssl ndg-httpsclient pyasn1
   #esrally --track=logging --report-file="~/report-$(date).md" --report-format=csv --pipeline=benchmark-only --target-hosts=https://ec2-34-253-194-30.eu-west-1.compute.amazonaws.com:9200,https://ec2-54-154-99-160.eu-west-1.compute.amazonaws.com:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
-  
-  #nohup esrally --track=logging --report-file="~/report-$(date).md" --report-format=csv --pipeline=benchmark-only --target-hosts=http://ec2-54-171-89-218.eu-west-1.compute.amazonaws.com:9200,http://ec2-54-154-147-53.eu-west-1.compute.amazonaws.com:9200 &
-  
-  
   #esrally --track=logging --pipeline=benchmark-only --target-hosts=$(hostname -f):9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
   #nyc_taxis
   #percolator
@@ -174,19 +170,19 @@ do_install() {
   #dns seems to be broken on aws currently, so we need to disable hostname verification
   echo "cluster.name: $STACKNAME" > $ES_CONF/elasticsearch.yml
   echo "discovery.zen.hosts_provider: ec2" >> $ES_CONF/elasticsearch.yml
-  echo "discovery.ec2.host_type: private_dns" >> $ES_CONF/elasticsearch.yml
+  echo "discovery.ec2.host_type: public_dns" >> $ES_CONF/elasticsearch.yml
   echo 'discovery.ec2.endpoint: ec2.eu-west-1.amazonaws.com' >> $ES_CONF/elasticsearch.yml
-  echo "network.host: _ec2:privateDns_" >> $ES_CONF/elasticsearch.yml
-  echo "transport.host: _ec2:privateDns_" >> $ES_CONF/elasticsearch.yml
+  echo "network.host: _ec2:publicDns_" >> $ES_CONF/elasticsearch.yml
+  echo "transport.host: _ec2:publicDns_" >> $ES_CONF/elasticsearch.yml
   echo "transport.tcp.port: 9300" >> $ES_CONF/elasticsearch.yml
   
-  echo "http.host: _ec2:privateDns_" >> $ES_CONF/elasticsearch.yml
+  echo "http.host: _ec2:publicDns_" >> $ES_CONF/elasticsearch.yml
   echo "http.port: 9200" >> $ES_CONF/elasticsearch.yml
   echo "http.cors.enabled: true" >> $ES_CONF/elasticsearch.yml
   echo 'http.cors.allow-origin: "*"' >> $ES_CONF/elasticsearch.yml
   
   echo 'logger.org.elasticsearch.discovery.ec2: TRACE'  >> $ES_CONF/elasticsearch.yml
-  echo "node.name: $SG_PRIVHOST" >> $ES_CONF/elasticsearch.yml
+  echo "node.name: $SG_PUBHOST" >> $ES_CONF/elasticsearch.yml
   echo "bootstrap.memory_lock: true" >> $ES_CONF/elasticsearch.yml
   echo "path.logs: /var/log/elasticsearch" >> $ES_CONF/elasticsearch.yml
   echo "path.data: /mnt/esdata" >> $ES_CONF/elasticsearch.yml
@@ -212,12 +208,12 @@ do_install() {
   echo "#                                                " >> $ES_CONF/elasticsearch.yml
   echo "##################################################" >> $ES_CONF/elasticsearch.yml	
   echo "searchguard.ssl.transport.enabled: true" >> $ES_CONF/elasticsearch.yml
-  echo "searchguard.ssl.transport.keystore_filepath: CN=$SG_PRIVHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.transport.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.transport.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.transport.enforce_hostname_verification: false" >> $ES_CONF/elasticsearch.yml
 
   echo "searchguard.ssl.http.enabled: true" >> $ES_CONF/elasticsearch.yml
-  echo "searchguard.ssl.http.keystore_filepath: CN=$SG_PRIVHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.http.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
 
   echo "searchguard.audit.type: internal_elasticsearch" >> $ES_CONF/elasticsearch.yml
@@ -246,7 +242,7 @@ do_install() {
   echo "elasticsearch  -  nofile  1000000" >> /etc/security/limits.conf
   
   #filebeat  
-  cat "/demo_root_ca/filebeat/$FYML" | sed -e "s/RPLC_HOST/$SG_PRIVHOST/g" > /etc/filebeat/filebeat.yml
+  cat "/demo_root_ca/filebeat/$FYML" | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/filebeat/filebeat.yml
 
   /bin/systemctl daemon-reload
 
@@ -263,7 +259,7 @@ do_install() {
   
   sleep 25
   
-  while ! nc -z $SG_PRIVHOST 9200 > /dev/null 2>&1; do
+  while ! nc -z $SG_PUBHOST 9200 > /dev/null 2>&1; do
     dolog "Wait for elasticsearch ..."
     sleep 15
     dolog "$(cat /var/log/elasticsearch/*)"
@@ -278,19 +274,19 @@ do_install() {
      dolog "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
   
      chmod +x $ES_PLUGINS/search-guard-6/tools/sgadmin.sh
-     $ES_PLUGINS/search-guard-6/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PRIVHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=sgadmin-keystore.jks -nhnv
+     $ES_PLUGINS/search-guard-6/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PUBHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=sgadmin-keystore.jks -nhnv
      check_ret "running sgadmin"
-     post_slack "SG $SG_VERSION initialized on https://$SG_PRIVHOST:9200"
+     post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
   
   
-	  curl -XPUT -k -u admin:admin "https://$SG_PRIVHOST:9200/twitter/tweet/1?pretty" -H'Content-Type: application/json' -d'
+	  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter/tweet/1?pretty" -H'Content-Type: application/json' -d'
 	  {
 		"user" : "searchguard",
 		"post_date" : "2013-11-15T14:12:12",
 		"message" : "rockn roll"
 	  }'
 
-	  curl -XPUT -k -u admin:admin "https://$SG_PRIVHOST:9200/twitter1/tweet/1?pretty" -H'Content-Type: application/json' -d'
+	  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter1/tweet/1?pretty" -H'Content-Type: application/json' -d'
 	  {
 		"user" : "searchguard1",
 		"post_date" : "2015-11-15T14:12:12",
@@ -308,7 +304,7 @@ do_install() {
    fi
   
   /usr/share/kibana/bin/kibana-plugin install x-pack
-  cat "/demo_root_ca/kibana/$KYML" | sed -e "s/RPLC_HOST/$SG_PRIVHOST/g" | sed -e "s/RPLC_PUBHOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
+  cat "/demo_root_ca/kibana/$KYML" | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
   #echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
   chown -R kibana /usr/share/kibana/
 
@@ -319,16 +315,16 @@ do_install() {
   
   #dolog "Install Metricbeat"
   
-  cat "/demo_root_ca/metricbeat/$MYML" | sed -e "s/RPLC_HOST/$SG_PRIVHOST/g" > /etc/metricbeat/metricbeat.yml
+  cat "/demo_root_ca/metricbeat/$MYML" | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/metricbeat/metricbeat.yml
 
   /bin/systemctl enable metricbeat.service
   systemctl start metricbeat.service
   
   if [ "$SG_DISABLED" == "false" ]; then
 
-  curl -ksS -u admin:admin "https://$SG_PRIVHOST:9200/_cluster/health?pretty" -H'Content-Type: application/json' > /tmp/health 2>&1
-  curl -ksS -u admin:admin "https://$SG_PRIVHOST:9200/_searchguard/authinfo?pretty" -H'Content-Type: application/json' > /tmp/authinfo 2>&1
-  curl -ksS -u admin:admin "https://$SG_PRIVHOST:9200/_searchguard/sslinfo?pretty" -H'Content-Type: application/json' > /tmp/sslinfo 2>&1
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?pretty" -H'Content-Type: application/json' > /tmp/health 2>&1
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/authinfo?pretty" -H'Content-Type: application/json' > /tmp/authinfo 2>&1
+  curl -ksS -u admin:admin "https://$SG_PUBHOST:9200/_searchguard/sslinfo?pretty" -H'Content-Type: application/json' > /tmp/sslinfo 2>&1
   
   dolog "$(cat /tmp/health)"
   fi
