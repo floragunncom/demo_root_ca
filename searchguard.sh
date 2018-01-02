@@ -156,8 +156,8 @@ do_install() {
   chmod -R 755 $ES_CONF
   
   #static version which supports hnv
-  wget -O $ES_PLUGINS/search-guard-ssl/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-1.0.2l-static-2.0.5.Final-non-fedora-linux-x86_64.jar
-  check_ret "Downloading netty native"
+  #wget -O $ES_PLUGINS/search-guard-ssl/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-1.0.2l-static-2.0.5.Final-non-fedora-linux-x86_64.jar
+  #check_ret "Downloading netty native"
   
   #if [ ! -f "netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar" ]; then
   #  wget -O $ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://search.maven.org/remotecontent?filepath=io/netty/netty-tcnative/$NETTY_NATIVE_VERSION/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar > /dev/null 2>&1
