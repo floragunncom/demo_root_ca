@@ -1,7 +1,11 @@
 #!/bin/bash
 set -x
+ES_VERSION=6.1.1
+SG_VERSION=$ES_VERSION-20.1
+SGSSL_VERSION=$ES_VERSION-25.0
+NETTY_NATIVE_VERSION=2.0.5.Final
 SG_DISABLED="false"
-SG_SSLONLY="true"
+SG_SSLONLY="false"
 MYML="metricbeat.yml"
 FYML="filebeat.yml"
 KYML="kibana.yml"
@@ -42,10 +46,6 @@ do_install() {
   #--report-format=csv
   #--test-mode
   #nohup esrally --track=logging --report-file="~/report-$(date).md" --report-format=csv --pipeline=benchmark-only --target-hosts=https://ec2-34-253-234-70.eu-west-1.compute.amazonaws.com:9200,https://ec2-54-154-62-50.eu-west-1.compute.amazonaws.com:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'" &
-
-  ES_VERSION=6.0.0
-  SG_VERSION=$ES_VERSION-17.beta1
-  SGSSL_VERSION=$ES_VERSION-24.beta1.1
   
   if [ ! -f "elasticsearch-$ES_VERSION.deb" ]; then
     wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
@@ -92,7 +92,6 @@ do_install() {
   
   #dolog "$(cat /etc/elasticsearch/jvm.options)"
   
-  NETTY_NATIVE_VERSION=2.0.5.Final
   NETTY_NATIVE_CLASSIFIER=linux-x86_64
   export ES_BIN=/usr/share/elasticsearch/bin
   export ES_CONF=/etc/elasticsearch
@@ -198,7 +197,7 @@ do_install() {
   
   
   echo "##################################################" >> $ES_CONF/elasticsearch.yml
-  echo "#          Search Guard 5 configuration          " >> $ES_CONF/elasticsearch.yml
+  echo "#          Search Guard 6 configuration          " >> $ES_CONF/elasticsearch.yml
   echo "#                                                " >> $ES_CONF/elasticsearch.yml
   echo "#Host: $SG_PUBHOST    $SG_PRIVHOST               " >> $ES_CONF/elasticsearch.yml
   echo "#Generated: $(date)                              " >> $ES_CONF/elasticsearch.yml
