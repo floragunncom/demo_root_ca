@@ -2,8 +2,10 @@
 set -x
 ES_VERSION=6.1.1
 SG_VERSION=$ES_VERSION-20.1
+SG_KIBANA_VERSION=8
 SGSSL_VERSION=$ES_VERSION-25.0
 NETTY_NATIVE_VERSION=2.0.5.Final
+OPENSSL_VERSION=1.0.2l
 SG_DISABLED="false"
 SG_SSLONLY="false"
 MYML="metricbeat.yml"
@@ -91,8 +93,7 @@ do_install() {
   sed -i -e "s/-Xms1g/-Xms${heapMB}m/g" /etc/elasticsearch/jvm.options
   
   #dolog "$(cat /etc/elasticsearch/jvm.options)"
-  
-  NETTY_NATIVE_CLASSIFIER=linux-x86_64
+
   export ES_BIN=/usr/share/elasticsearch/bin
   export ES_CONF=/etc/elasticsearch
   export ES_LOG=/var/log/elasticsearch
@@ -156,13 +157,14 @@ do_install() {
   chmod -R 755 $ES_CONF
   
   #static version which supports hnv
-  #wget -O $ES_PLUGINS/search-guard-ssl/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-1.0.2l-static-2.0.5.Final-non-fedora-linux-x86_64.jar
-  #check_ret "Downloading netty native"
-  
-  #if [ ! -f "netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar" ]; then
-  #  wget -O $ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar https://search.maven.org/remotecontent?filepath=io/netty/netty-tcnative/$NETTY_NATIVE_VERSION/netty-tcnative-$NETTY_NATIVE_VERSION-$NETTY_NATIVE_CLASSIFIER.jar > /dev/null 2>&1
-  #  check_ret "Downloading netty native"
-  #fi
+  if [ "$SG_SSLONLY" == "false" ]; then
+      wget -O "$ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-linux-x86_64.jar" "https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-$OPENSSL_VERSION-static-$NETTY_NATIVE_VERSION-non-fedora-linux-x86_64.jar" > downloadnetty 2>&1
+      check_ret "Downloading netty native to search-guard-6: $(cat downloadnetty)"
+  else
+      wget -O "$ES_PLUGINS/search-guard-ssl/netty-tcnative-$NETTY_NATIVE_VERSION-linux-x86_64.jar" "https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-$OPENSSL_VERSION-static-$NETTY_NATIVE_VERSION-non-fedora-linux-x86_64.jar" > downloadnetty 2>&1
+      check_ret "Downloading netty native to search-guard-ssl: $(cat downloadnetty)"
+  fi
+
   
   cd - > /dev/null 2>&1
 
@@ -305,7 +307,7 @@ do_install() {
   #dolog "Install Kibana"
 
    if [ "$SG_DISABLED" == "false" ] && [ "$SG_SSLONLY" == "false" ]; then
-      /usr/share/kibana/bin/kibana-plugin install https://oss.sonatype.org/content/repositories/releases/com/floragunn/search-guard-kibana-plugin/6.0.0-6.beta1/search-guard-kibana-plugin-6.0.0-6.beta1.zip
+      /usr/share/kibana/bin/kibana-plugin install https://oss.sonatype.org/content/repositories/releases/com/floragunn/search-guard-kibana-plugin/$ES_VERSION-$SG_KIBANA_VERSION/search-guard-kibana-plugin-$ES_VERSION-$SG_KIBANA_VERSION.zip
    fi
   
   /usr/share/kibana/bin/kibana-plugin install x-pack
