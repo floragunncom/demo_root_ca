@@ -25,9 +25,9 @@ req_extensions          = ca_reqext             # Desired extensions
 [ ca_dn ]
 #0.domainComponent       = "com"
 #1.domainComponent       = "example"
-organizationName        = "Example DSG Inc. 1.0"
-organizationalUnitName  = "Example DSG Inc. 1.0 Root CA"
-commonName              = "Example DSG Inc. 1.0 Root CA"
+organizationName        = "Example Inc."
+organizationalUnitName  = "Example Inc. Root CA"
+commonName              = "Example Inc. Root CA"
 
 [ ca_reqext ]
 keyUsage                = critical,keyCertSign,cRLSign
@@ -42,7 +42,7 @@ subjectKeyIdentifier    = hash
 default_ca              = root_ca               # The default CA section
 
 [ root_ca ]
-certificate             = $dir/ca/$ca.crt       # The CA cert
+certificate             = $dir/ca/$ca.pem       # The CA cert
 private_key             = $dir/ca/$ca/private/$ca.key # CA private key
 new_certs_dir           = $dir/ca/$ca           # Certificate archive
 serial                  = $dir/ca/$ca/db/$ca.crt.srl # Serial number file

@@ -1,81 +1,93 @@
 #!/bin/bash
-#./gen_node_cert.sh <organisation name> <nodedn> <nodedns> <truststore password> <root ca passsord> 
-#########################
-# 'dname' and 'ext san' have to specified on two location in this file  
-# For the meaning of oid:1.2.3.4.5.5 see:
-#    https://github.com/floragunncom/search-guard-docs/blob/master/architecture.md
-#    https://github.com/floragunncom/search-guard-docs/blob/master/installation.md
-#########################
+#<organisation name> <nodedn> <nodedns> <filename> <key password> <root ca passsord> 
+#"Example Inc." "/CN=es-node.example.com/OU=SSL/O=Test/L=Test/C=DE" "es-node.example.com" "es-node" changeit capass
+
+printerr() {
+  if [ $? != 0 ]; then
+      echo "-- ERROR!! --"
+  fi 
+  
+}
+trap printerr 0
 
 set -e
 ORGA_NAME="$1"
-NODE_NAME="$2"
-NODE_DNS="$3"
+SERVER_NAME="$2"
+SERVER_DNS="$3"
+FILENAME="$4"
 
-if [ -z "$4" ] ; then
-  unset CA_PASS KS_PASS
-  read -p "Enter CA pass: " -s CA_PASS ; echo
-  read -p "Enter Keystore pass: " -s KS_PASS ; echo
+echo "Subject: $SERVER_NAME"
+echo "Dns: $SERVER_DNS"
+echo "Filename: $FILENAME"
+
+if [ -z "$5" ] ; then
+  unset KEY_PASS
+  read -p "Enter KEY pass: " -s KEY_PASS ; echo
  else
-  KS_PASS="$4"
-  CA_PASS="$5"
+  KEY_PASS="$5"
 fi
 
-rm -f "$NODE_NAME-keystore.jks"
-rm -f "$NODE_NAME.csr"
-rm -f "$NODE_NAME-signed.pem"
+if [ -z "$6" ] ; then
+  unset CA_PASS
+  read -p "Enter CA pass: " -s CA_PASS ; echo
+ else
+  CA_PASS="$6"
+fi
 
-echo Generating keystore and certificate for node "$NODE_NAME"
 
-keytool -genkey \
-        -alias     "$NODE_NAME" \
-        -keystore  "$NODE_NAME-keystore.jks" \
-        -keyalg    RSA \
-        -keysize   2048 \
-        -validity  712 \
-        -sigalg SHA256withRSA \
-        -keypass "$KS_PASS" \
-        -storepass "$KS_PASS" \
-        -dname "$NODE_NAME" \
-        -ext san=dns:$NODE_DNS,oid:1.2.3.4.5.5 
-        
-#oid:1.2.3.4.5.5 denote this a server node certificate for search guard
+cat >tmp_openssl.cnf <<EOL
 
-echo Generating certificate signing request for node $NODE_NAME
+oid_section = OIDs
 
-keytool -certreq \
-        -alias      "$NODE_NAME" \
-        -keystore   "$NODE_NAME-keystore.jks" \
-        -file       "$NODE_NAME.csr" \
-        -keyalg     rsa \
-        -keypass "$KS_PASS" \
-        -storepass "$KS_PASS" \
-        -dname "$NODE_NAME" \
-        -ext san=dns:$NODE_DNS,oid:1.2.3.4.5.5
-        
-#oid:1.2.3.4.5.5 denote this a server node certificate for search guard
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+default_md = sha256 
 
-echo Sign certificate request with CA
+[req_distinguished_name]
+# empty
+# set in command line
+
+
+[ OIDs ]
+sgID=1.2.3.4.5.5
+
+[ v3_req ]
+# Extensions to add to a certificate request
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+subjectAltName = @alt_names
+
+[alt_names]
+
+EOL
+
+#https://support.quovadisglobal.com/kb/a471/inserting-custom-oids-into-openssl.aspx
+echo "Create cert key"
+openssl ecparam -name secp384r1 -genkey | openssl ec -aes-256-cbc -out $FILENAME.key.tmp -passout "pass:$KEY_PASS"
+#echo "topk8"
+openssl pkcs8 -topk8 -inform pem -in $FILENAME.key.tmp -outform pem -out $FILENAME.key -passout "pass:$KEY_PASS" -passin "pass:$KEY_PASS"
+#rm -rf $FILENAME.key.tmp
+
+echo "Create a client certificate signing request (CSR)"
+openssl req -new -key $FILENAME.key -out $FILENAME.csr -passin "pass:$KEY_PASS" \
+   -subj "$SERVER_NAME" \
+   -reqexts v3_req \
+   -config <(cat tmp_openssl.cnf \
+     <(printf "DNS.1=$SERVER_DNS\nRID.1=sgID"))
+
+echo "Sign cert with intermediate key"
 openssl ca \
-    -in "$NODE_NAME.csr" \
+    -in "$FILENAME.csr" \
     -notext \
-    -out "$NODE_NAME-signed.pem" \
+    -out "$FILENAME-signed.pem" \
     -config "etc/gen-signing-ca.conf.$ORGA_NAME" \
     -extensions v3_req \
     -batch \
-	-passin "pass:$CA_PASS" \
-	-extensions server_ext 
+    -passin "pass:$CA_PASS" \
+    -days 720 \
+    -extensions server_ext
 
-echo "Import back to keystore (including CA chain)"
-
-cat ca/chain-ca.pem "$NODE_NAME-signed.pem" | keytool \
-    -importcert \
-    -keystore "$NODE_NAME-keystore.jks" \
-    -storepass "$KS_PASS" \
-    -noprompt \
-    -alias "$NODE_NAME"
-    
-keytool -importkeystore -srckeystore "$NODE_NAME-keystore.jks" -srcstorepass "$KS_PASS" -srcstoretype JKS -deststoretype PKCS12 -deststorepass "$KS_PASS" -destkeystore "$NODE_NAME-keystore.p12"
-
-echo All done for "$NODE_NAME"
-	
+#we do not add the root certificate to the chain
+cat "$FILENAME-signed.pem" ca/signing-ca.pem  > $FILENAME.crt.pem
+openssl pkcs12 -export -in "$FILENAME.crt.pem" -inkey "$FILENAME.key" -out "$FILENAME.p12" -passin "pass:$KEY_PASS" -passout "pass:$KEY_PASS"

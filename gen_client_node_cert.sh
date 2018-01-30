@@ -1,74 +1,82 @@
 #!/bin/bash
-#./gen_client_node_cert.sh <organisation name> <clientdn> <truststore password> <root ca passsord> 
+#https://medium.com/where-the-flamingcow-roams/elliptic-curve-certificate-authority-bbdb9c3855f7
+#<organisation name> <clientdn> <filename> <key password> <root ca passsord> 
+#"Example Inc." "/CN=es-node.example.com/OU=SSL/O=Test/L=Test/C=DE" "es-node.example.com" "es-node" changeit capass
+
+printerr() {
+  if [ $? != 0 ]; then
+      echo "-- ERROR!! --"
+  fi 
+  
+}
+trap printerr 0
+
+#rm -rf "$CLIENT_NAME-keystore.jks"
+#rm -rf "$CLIENT_NAME-keystore.p12"
+#rm -rf "$CLIENT_NAME.csr"
+#rm -rf "$CLIENT_NAME-signed.pem"
+
 set -e
 ORGA_NAME="$1"
 CLIENT_NAME="$2"
+FILENAME="$3"
 
-if [ -z "$3" ] ; then
-  unset CA_PASS KS_PASS
-  read -p "Enter CA pass: " -s CA_PASS ; echo
-  read -p "Enter Keystore pass: " -s KS_PASS ; echo
+echo "Orga: $ORGA_NAME"
+echo "Client name: $CLIENT_NAME"
+
+if [ -z "$4" ] ; then
+  unset KEY_PASS
+  read -p "Enter KEY pass: " -s KEY_PASS ; echo
  else
-  KS_PASS="$3"
-  CA_PASS="$4"
+  KEY_PASS="$4"
 fi
 
-rm -f "$CLIENT_NAME-keystore.jks"
-rm -f "$CLIENT_NAME.csr"
-rm -f "$CLIENT_NAME-signed.pem"
+if [ -z "$5" ] ; then
+  unset CA_PASS
+  read -p "Enter CA pass: " -s CA_PASS ; echo
+ else
+  CA_PASS="$5"
+fi
 
-echo Generating keystore and certificate for node "$CLIENT_NAME"
+#https://support.quovadisglobal.com/kb/a471/inserting-custom-oids-into-openssl.aspx
+echo "Create cert key"
+openssl ecparam -name secp384r1 -genkey | openssl ec -aes-256-cbc -out $FILENAME.key.tmp -passout "pass:$KEY_PASS"
+#echo "topk8"
+openssl pkcs8 -topk8 -inform pem -in $FILENAME.key.tmp -outform pem -out $FILENAME.key -passout "pass:$KEY_PASS" -passin "pass:$KEY_PASS"
+#rm -rf $FILENAME.key.tmp
 
-keytool -genkey \
-        -alias     "$CLIENT_NAME" \
-        -keystore  "$CLIENT_NAME-keystore.jks" \
-        -keyalg    RSA \
-        -keysize   2048 \
-        -sigalg SHA256withRSA \
-        -validity  712 \
-        -keypass $KS_PASS \
-        -storepass $KS_PASS \
-        -dname "$CLIENT_NAME"
-        #-dname "CN=$CLIENT_NAME, OU=client, O=client, L=Test, C=DE"
-
-echo Generating certificate signing request for node $CLIENT_NAME
-
-keytool -certreq \
-        -alias      "$CLIENT_NAME" \
-        -keystore   "$CLIENT_NAME-keystore.jks" \
-        -file       "$CLIENT_NAME.csr" \
-        -keyalg     rsa \
-        -keypass "$KS_PASS" \
-        -storepass "$KS_PASS" \
-        -dname "$CLIENT_NAME"
+echo "Create a client certificate signing request (CSR)"
+openssl req -new -key "$FILENAME.key" -out "$FILENAME.csr" -passin "pass:$KEY_PASS" \
+   -subj "$CLIENT_NAME" \
+   -config "etc/gen-signing-ca.conf.$ORGA_NAME"
 
 echo Sign certificate request with CA
 openssl ca \
-    -in "$CLIENT_NAME.csr" \
+    -in "$FILENAME.csr" \
     -notext \
-    -out "$CLIENT_NAME-signed.pem" \
+    -out "$FILENAME-signed.pem" \
     -config "etc/gen-signing-ca.conf.$ORGA_NAME" \
     -extensions v3_req \
     -batch \
 	-passin "pass:$CA_PASS" \
 	-extensions server_ext 
+	#TODO client-ext
 
-echo "Import back to keystore (including CA chain)"
+#echo "Import back to keystore (including CA chain)"
 
-cat ca/chain-ca.pem "$CLIENT_NAME-signed.pem" | keytool \
-    -importcert \
-    -keystore "$CLIENT_NAME-keystore.jks" \
-    -storepass "$KS_PASS" \
-    -noprompt \
-    -alias "$CLIENT_NAME"
+#cat ca/chain-ca.pem "$CLIENT_NAME-signed.pem" | keytool \
+#    -importcert \
+#    -keystore "$CLIENT_NAME-keystore.jks" \
+#    -storepass "$KS_PASS" \
+#    -noprompt \
+#    -alias "$CLIENT_NAME"
 
-keytool -importkeystore -srckeystore "$CLIENT_NAME-keystore.jks" -srcstorepass "$KS_PASS" -srcstoretype JKS -deststoretype PKCS12 -deststorepass "$KS_PASS" -destkeystore "$CLIENT_NAME-keystore.p12"
+#keytool -importkeystore -srckeystore "$CLIENT_NAME-keystore.jks" -srcstorepass "$KS_PASS" -srcstoretype JKS -deststoretype PKCS12 -deststorepass "$KS_PASS" -destkeystore "$CLIENT_NAME-keystore.p12"
 
-openssl pkcs12 -in "$CLIENT_NAME-keystore.p12" -out "$CLIENT_NAME.all.pem" -nodes -passin "pass:$KS_PASS"
-openssl pkcs12 -in "$CLIENT_NAME-keystore.p12" -out "$CLIENT_NAME.key.pem" -nocerts -nodes -passin "pass:$KS_PASS"
-openssl pkcs12 -in "$CLIENT_NAME-keystore.p12" -out "$CLIENT_NAME.crt.pem" -clcerts -nokeys -passin "pass:$KS_PASS"
+#openssl pkcs12 -in "$FILENAME-keystore.p12" -out "$FILENAME.all.pem" -nodes -passin "pass:$KS_PASS"
+#openssl pkcs12 -in "$FILENAME-keystore.p12" -out "$FILENAME.key.pem" -nocerts -nodes -passin "pass:$KS_PASS"
+#openssl pkcs12 -in "$FILENAME-keystore.p12" -out "$FILENAME.crt.pem" -clcerts -nokeys -passin "pass:$KS_PASS"
 
-cat $CLIENT_NAME.crt.pem ca/chain-ca.pem  > $CLIENT_NAME.crtfull.pem
+#cat $FILENAME.crt.pem ca/chain-ca.pem  > $FILENAME.crtfull.pem
 
 echo All done for "$CLIENT_NAME"
-	

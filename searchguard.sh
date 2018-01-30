@@ -2,15 +2,15 @@
 set -x
 ES_VERSION=6.1.1
 SG_VERSION=$ES_VERSION-20.1
-SG_KIBANA_VERSION=8
+#SG_KIBANA_VERSION=8
 SGSSL_VERSION=$ES_VERSION-25.0
 NETTY_NATIVE_VERSION=2.0.5.Final
 OPENSSL_VERSION=1.0.2l
 SG_DISABLED="false"
 SG_SSLONLY="false"
-MYML="metricbeat.yml"
-FYML="filebeat.yml"
-KYML="kibana.yml"
+#MYML="metricbeat.yml"
+#FYML="filebeat.yml"
+#KYML="kibana.yml"
 
 post_slack() {
    curl -X POST --data-urlencode 'payload={"channel": "#aws_notify", "username": "awsbot", "text": "'"$1"'", "icon_emoji": ":cyclone:"}' $SLACKURL > /dev/null 2>&1
@@ -33,6 +33,26 @@ do_install() {
   systemctl stop metricbeat.service > /dev/null 2>&1
   systemctl stop elasticsearch.service > /dev/null 2>&1
   systemctl stop filebeat.service > /dev/null 2>&1
+  
+  
+  #Make sure we have enough entropie
+  cat /proc/sys/kernel/random/entropy_avail
+  dolog "Entropie on $SG_PUBHOST is $(cat /proc/sys/kernel/random/entropy_avail)"
+  #rngd -r /dev/urandom -o /dev/random -t 1
+  
+  #Use ECDSA
+  
+  #openssl ecparam -name prime256v1 -genkey -param_enc explicit -out private-key.pem 
+  #openssl req -new -x509 -key private-key.pem -out server.pem -days 730 -sha256
+  
+  cat /proc/sys/net/core/somaxconn
+  dolog "somaxconn on $SG_PUBHOST is $(cat /proc/sys/net/core/somaxconn)"
+  
+  #Netty version
+  #replace netty
+  
+  #python perf script
+  #https://github.com/floragunncom/search-guard/issues/310
   
   #dolog "Install packages"
   
@@ -57,23 +77,23 @@ do_install() {
   dpkg --force-all -i elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
   check_ret "Installing ES"
   
-  wget https://artifacts.elastic.co/downloads/beats/metricbeat/metricbeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  check_ret "Downloading Metricbeat"
+  #wget https://artifacts.elastic.co/downloads/beats/metricbeat/metricbeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
+  #check_ret "Downloading Metricbeat"
   
-  dpkg --force-all -i metricbeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  check_ret "Installing Metricbeat"
+  #dpkg --force-all -i metricbeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
+  #check_ret "Installing Metricbeat"
   
-  wget https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  check_ret "Downloading filebeat"
+  #wget https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
+  #check_ret "Downloading filebeat"
   
-  dpkg --force-all -i filebeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  check_ret "Installing filebeat"
+  #dpkg --force-all -i filebeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
+  #check_ret "Installing filebeat"
   
-  wget https://artifacts.elastic.co/downloads/kibana/kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  check_ret "Downloading Kibana"
+  #wget https://artifacts.elastic.co/downloads/kibana/kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
+  #check_ret "Downloading Kibana"
   
-  dpkg --force-all -i kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  check_ret "Installing Kibana"
+  #dpkg --force-all -i kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
+  #check_ret "Installing Kibana"
   
   # Total memory in KB
   totalMemKB=$(awk '/MemTotal:/ { print $2 }' /proc/meminfo)
@@ -121,8 +141,8 @@ do_install() {
   
   check_ret "Installing SG plugin"
   
-  $ES_BIN/elasticsearch-plugin install -b x-pack > /dev/null 
-  check_ret "Installing xpack plugin"
+  #$ES_BIN/elasticsearch-plugin install -b x-pack > /dev/null 
+  #check_ret "Installing xpack plugin"
   
   cd /demo_root_ca
   git pull > /dev/null 2>&1
@@ -139,10 +159,10 @@ do_install() {
   check_ret "generate certificate"
   ./gen_client_node_cert.sh "$ORG_NAME" "CN=sgadmin" changeit "ca pass" > /dev/null 2>&1
   check_ret "generate certificate"
-  ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=topbeat" $SG_PUBHOST topbeat "ca pass"  > /dev/null 2>&1
-  check_ret "generate certificate"
-  ./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=kibana" $SG_PUBHOST kibana "ca pass"  > /dev/null 2>&1
-  check_ret "generate certificate"
+  #./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=topbeat" $SG_PUBHOST topbeat "ca pass"  > /dev/null 2>&1
+  #check_ret "generate certificate"
+  #./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=kibana" $SG_PUBHOST kibana "ca pass"  > /dev/null 2>&1
+  #check_ret "generate certificate"
 
   cp truststore.jks.orig truststore.jks
 
@@ -188,10 +208,10 @@ do_install() {
   echo "path.logs: /var/log/elasticsearch" >> $ES_CONF/elasticsearch.yml
   echo "path.data: /mnt/esdata" >> $ES_CONF/elasticsearch.yml
   echo "discovery.zen.minimum_master_nodes: 2" >> $ES_CONF/elasticsearch.yml
-  echo "xpack.security.enabled: false" >> $ES_CONF/elasticsearch.yml
-  echo "xpack.watcher.enabled: false" >> $ES_CONF/elasticsearch.yml
-  echo "xpack.monitoring.enabled: true" >> $ES_CONF/elasticsearch.yml
-  echo "xpack.ml.enabled: false" >> $ES_CONF/elasticsearch.yml
+  #echo "xpack.security.enabled: false" >> $ES_CONF/elasticsearch.yml
+  #echo "xpack.watcher.enabled: false" >> $ES_CONF/elasticsearch.yml
+  #echo "xpack.monitoring.enabled: true" >> $ES_CONF/elasticsearch.yml
+  #echo "xpack.ml.enabled: false" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
@@ -217,6 +237,8 @@ do_install() {
   echo "searchguard.ssl.http.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
 
+  echo "searchguard.ssl.transport.enabled_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.http.enabled_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256" >> $ES_CONF/elasticsearch.yml
 
   if [ "$SG_SSLONLY" == "false" ]; then
   
@@ -249,12 +271,12 @@ do_install() {
   echo "elasticsearch  -  nofile  1000000" >> /etc/security/limits.conf
   
   #filebeat  
-  cat "/demo_root_ca/filebeat/$FYML" | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/filebeat/filebeat.yml
+  #cat "/demo_root_ca/filebeat/$FYML" | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/filebeat/filebeat.yml
 
-  /bin/systemctl daemon-reload
+  #/bin/systemctl daemon-reload
 
-  /bin/systemctl enable filebeat.service
-  systemctl start filebeat.service
+  #/bin/systemctl enable filebeat.service
+  #systemctl start filebeat.service
   #filebeat end
 
  
@@ -302,7 +324,9 @@ do_install() {
   
   fi
   
-  
+  dolog "Finished"
+  #no kibana and metricbeat
+  exit 0
   
   #dolog "Install Kibana"
 
@@ -357,6 +381,7 @@ check_prerequisites() {
   
   ########## start Oracle 8 Java 
   apt-get -yqq update > /dev/null 2>&1
+  apt-get -y remove openjdk-7-jdk openjdk-7-jre openjdk-7-jre-headless || true
   echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections > /dev/null 2>&1
   apt-get -yqq install software-properties-common > /dev/null 2>&1
   add-apt-repository -y ppa:webupd8team/java > /dev/null 2>&1
@@ -366,6 +391,7 @@ check_prerequisites() {
 
   apt-get -yqq install ntp ntpdate haveged libssl-dev autoconf libtool build-essential libffi6 libffi-dev git curl wget openssl libapr1 iputils-ping dnsutils host netcat telnet > /dev/null 2>&1
   apt-get -yqq install unzip awscli docker.io curl git jq ansible apt-transport-https
+  apt-get -y autoremove || true
 
   if ! check_cmd docker; then
     do_error_exit "docker is not installed"
