@@ -313,7 +313,7 @@ do_install() {
      dolog "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
   
      chmod +x $ES_PLUGINS/search-guard-6/tools/sgadmin.sh
-     $ES_PLUGINS/search-guard-6/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PUBHOST -icl -cacert $ES_CONF/root-ca.pem -cert $ES_CONF/sgadmin.chain.pem -key $ES_CONF/CN=sgadmin.key -keypass changeit -nhnv
+     $ES_PLUGINS/search-guard-6/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PUBHOST -icl -cacert $ES_CONF/root-ca.pem -cert $ES_CONF/CN=sgadmin.chain.pem -key $ES_CONF/CN=sgadmin.key -keypass changeit -nhnv
      check_ret "running sgadmin"
      post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
   
