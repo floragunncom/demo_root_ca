@@ -119,7 +119,7 @@ do_install() {
   export ES_LOG=/var/log/elasticsearch
   export ES_PLUGINS=/usr/share/elasticsearch/plugins
   
-  ORG_NAME="Example DSG Inc. 1.0"
+  ORG_NAME="Example Inc."
   
   echo "SG_PUBHOST: $SG_PUBHOST"
   echo "SG_PRIVHOST: $SG_PRIVHOST"
@@ -399,8 +399,8 @@ check_prerequisites() {
   apt-get -yqq install oracle-java8-installer oracle-java8-unlimited-jce-policy > /dev/null 2>&1
   ########## end Oracle 8 Java
 
-  apt-get -yqq install ntp ntpdate haveged libssl-dev autoconf libtool build-essential libffi6 libffi-dev git curl wget openssl libapr1 iputils-ping dnsutils host netcat telnet > /dev/null 2>&1
-  apt-get -yqq install unzip awscli docker.io curl git jq ansible apt-transport-https
+  apt-get -yqq install ntp ntpdate haveged libssl-dev autoconf libtool build-essential libffi6 libffi-dev wget openssl libapr1 iputils-ping dnsutils host netcat telnet > /dev/null 2>&1
+  apt-get -yqq install unzip curl git jq apt-transport-https
   apt-get -y autoremove || true
 
   if ! check_cmd docker; then
