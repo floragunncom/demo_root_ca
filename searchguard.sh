@@ -148,26 +148,26 @@ do_install() {
   git pull > /dev/null 2>&1
   
   #dolog "Generate certificates"
-  cp truststore.jks truststore.jks.orig
+  #cp truststore.jks truststore.jks.orig
   rm -rf *.jks *.p12 *.pem *.csr *.key
-  
-  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PUBHOST" "$SG_PUBHOST" changeit "ca pass" > /dev/null 2>&1
+  #<organisation name> <nodedn> <nodedns> <filename> <key password> <root ca passsord> 
+  ./gen_node_cert.sh "$ORG_NAME" "/CN=$SG_PUBHOST" "$SG_PUBHOST" "CN=$SG_PUBHOST" changeit "ca pass" > /dev/null 2>&1
   check_ret "generate certificate"
-  ./gen_node_cert.sh "$ORG_NAME" "CN=$SG_PRIVHOST" "$SG_PRIVHOST" changeit "ca pass" > /dev/null 2>&1
+  ./gen_node_cert.sh "$ORG_NAME" "/CN=$SG_PRIVHOST" "$SG_PRIVHOST" "CN=$SG_PRIVHOST" changeit "ca pass" > /dev/null 2>&1
   check_ret "generate certificate"
-  ./gen_client_node_cert.sh "$ORG_NAME" "CN=user" changeit "ca pass" > /dev/null 2>&1
+  ./gen_client_node_cert.sh "$ORG_NAME" "/CN=user" "CN=user" changeit "ca pass" > /dev/null 2>&1
   check_ret "generate certificate"
-  ./gen_client_node_cert.sh "$ORG_NAME" "CN=sgadmin" changeit "ca pass" > /dev/null 2>&1
+  ./gen_client_node_cert.sh "$ORG_NAME" "/CN=sgadmin" "CN=sgadmin" changeit "ca pass" > /dev/null 2>&1
   check_ret "generate certificate"
   #./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=topbeat" $SG_PUBHOST topbeat "ca pass"  > /dev/null 2>&1
   #check_ret "generate certificate"
   #./gen_nonsgserver_certificate.sh "$ORG_NAME" "/C=DE/ST=Berlin/L=City/O=floragunn/OU=IT Department/CN=kibana" $SG_PUBHOST kibana "ca pass"  > /dev/null 2>&1
   #check_ret "generate certificate"
 
-  cp truststore.jks.orig truststore.jks
+  #cp truststore.jks.orig truststore.jks
 
-  cp *.jks $ES_CONF/
-  cp *.p12 $ES_CONF/
+  #cp *.jks $ES_CONF/
+  #cp *.p12 $ES_CONF/
   cp *.pem $ES_CONF/
   cp *.key $ES_CONF/
   cp ca/*.pem $ES_CONF/
@@ -228,16 +228,26 @@ do_install() {
   echo "#NettyNative-Version: $NETTY_NATIVE_VERSION      " >> $ES_CONF/elasticsearch.yml
   echo "#                                                " >> $ES_CONF/elasticsearch.yml
   echo "##################################################" >> $ES_CONF/elasticsearch.yml	
-  echo "searchguard.ssl.transport.enabled: true" >> $ES_CONF/elasticsearch.yml
-  echo "searchguard.ssl.transport.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
-  echo "searchguard.ssl.transport.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
+
+  #echo "searchguard.ssl.transport.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
+  #echo "searchguard.ssl.transport.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.transport.pemkey_filepath: CN=$SG_PUBHOST.key" >> $ES_CONF/elasticsearch.yml
+  # Key password (omit this setting if the key has no password)
+  echo "searchguard.ssl.transport.pemkey_password: changeit" >> $ES_CONF/elasticsearch.yml
+  # X509 node certificate chain in PEM format, must be placed under the config/ dir
+  echo "searchguard.ssl.transport.pemcert_filepath: CN=$SG_PUBHOST.chain.pem" >> $ES_CONF/elasticsearch.yml
+  # Trusted certificates
+  echo "searchguard.ssl.transport.pemtrustedcas_filepath: root-ca.pem" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.transport.enforce_hostname_verification: false" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.transport.enabled_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256" >> $ES_CONF/elasticsearch.yml
 
   echo "searchguard.ssl.http.enabled: true" >> $ES_CONF/elasticsearch.yml
-  echo "searchguard.ssl.http.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
-  echo "searchguard.ssl.http.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
-
-  echo "searchguard.ssl.transport.enabled_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256" >> $ES_CONF/elasticsearch.yml
+  #echo "searchguard.ssl.http.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
+  #echo "searchguard.ssl.http.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.http.pemkey_filepath: CN=$SG_PUBHOST.key" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.http.pemkey_password: changeit" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.http.pemcert_filepath: CN=$SG_PUBHOST.chain.pem" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.http.pemtrustedcas_filepath: root-ca.pem" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.enabled_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256" >> $ES_CONF/elasticsearch.yml
 
   if [ "$SG_SSLONLY" == "false" ]; then
@@ -303,7 +313,7 @@ do_install() {
      dolog "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
   
      chmod +x $ES_PLUGINS/search-guard-6/tools/sgadmin.sh
-     $ES_PLUGINS/search-guard-6/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PUBHOST -icl -ts $ES_CONF/truststore.jks -ks $ES_CONF/CN=sgadmin-keystore.jks -nhnv
+     $ES_PLUGINS/search-guard-6/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PUBHOST -icl -cacert $ES_CONF/root-ca.pem -cert $ES_CONF/sgadmin.chain.pem -key $ES_CONF/CN=sgadmin.key -keypass changeit -nhnv
      check_ret "running sgadmin"
      post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
   

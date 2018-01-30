@@ -79,4 +79,7 @@ openssl ca \
 
 #cat $FILENAME.crt.pem ca/chain-ca.pem  > $FILENAME.crtfull.pem
 
+cat "$FILENAME-signed.pem" ca/signing-ca.pem  > $FILENAME.chain.pem
+openssl pkcs12 -export -in "$FILENAME.chain.pem" -inkey "$FILENAME.key" -out "$FILENAME.p12" -passin "pass:$KEY_PASS" -passout "pass:$KEY_PASS"
+
 echo All done for "$CLIENT_NAME"

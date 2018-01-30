@@ -89,5 +89,5 @@ openssl ca \
     -extensions server_ext
 
 #we do not add the root certificate to the chain
-cat "$FILENAME-signed.pem" ca/signing-ca.pem  > $FILENAME.crt.pem
-openssl pkcs12 -export -in "$FILENAME.crt.pem" -inkey "$FILENAME.key" -out "$FILENAME.p12" -passin "pass:$KEY_PASS" -passout "pass:$KEY_PASS"
+cat "$FILENAME-signed.pem" ca/signing-ca.pem  > $FILENAME.chain.pem
+openssl pkcs12 -export -in "$FILENAME.chain.pem" -inkey "$FILENAME.key" -out "$FILENAME.p12" -passin "pass:$KEY_PASS" -passout "pass:$KEY_PASS"
