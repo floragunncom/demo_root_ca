@@ -207,7 +207,7 @@ do_install() {
   echo "bootstrap.memory_lock: true" >> $ES_CONF/elasticsearch.yml
   echo "path.logs: /var/log/elasticsearch" >> $ES_CONF/elasticsearch.yml
   echo "path.data: /mnt/esdata" >> $ES_CONF/elasticsearch.yml
-  echo "discovery.zen.minimum_master_nodes: 2" >> $ES_CONF/elasticsearch.yml
+  #echo "discovery.zen.minimum_master_nodes: 2" >> $ES_CONF/elasticsearch.yml
   #echo "xpack.security.enabled: false" >> $ES_CONF/elasticsearch.yml
   #echo "xpack.watcher.enabled: false" >> $ES_CONF/elasticsearch.yml
   #echo "xpack.monitoring.enabled: true" >> $ES_CONF/elasticsearch.yml
