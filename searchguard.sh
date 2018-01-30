@@ -237,7 +237,7 @@ do_install() {
   # X509 node certificate chain in PEM format, must be placed under the config/ dir
   echo "searchguard.ssl.transport.pemcert_filepath: CN=$SG_PUBHOST.chain.pem" >> $ES_CONF/elasticsearch.yml
   # Trusted certificates
-  echo "searchguard.ssl.transport.pemtrustedcas_filepath: root-ca.pem" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.transport.pemtrustedcas_filepath: chain-ca.pem" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.transport.enforce_hostname_verification: false" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.transport.enabled_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256" >> $ES_CONF/elasticsearch.yml
 
@@ -247,7 +247,7 @@ do_install() {
   echo "searchguard.ssl.http.pemkey_filepath: CN=$SG_PUBHOST.key" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.pemkey_password: changeit" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.pemcert_filepath: CN=$SG_PUBHOST.chain.pem" >> $ES_CONF/elasticsearch.yml
-  echo "searchguard.ssl.http.pemtrustedcas_filepath: root-ca.pem" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.http.pemtrustedcas_filepath: chain-ca.pem" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.enabled_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256" >> $ES_CONF/elasticsearch.yml
 
   if [ "$SG_SSLONLY" == "false" ]; then
