@@ -11,15 +11,16 @@ printerr() {
 }
 trap printerr 0
 
-#rm -rf "$CLIENT_NAME-keystore.jks"
-#rm -rf "$CLIENT_NAME-keystore.p12"
-#rm -rf "$CLIENT_NAME.csr"
-#rm -rf "$CLIENT_NAME-signed.pem"
+
 
 set -e
 ORGA_NAME="$1"
 CLIENT_NAME="$2"
 FILENAME="$3"
+
+rm -rf "$FILENAME.p12"
+rm -rf "$FILENAME.csr"
+rm -rf "$FILENAME-signed.pem"
 
 echo "Orga: $ORGA_NAME"
 echo "Client name: $CLIENT_NAME"
@@ -47,8 +48,9 @@ openssl pkcs8 -topk8 -inform pem -in $FILENAME.key.tmp -outform pem -out $FILENA
 
 echo "Create a client certificate signing request (CSR)"
 openssl req -new -key "$FILENAME.key" -out "$FILENAME.csr" -passin "pass:$KEY_PASS" \
-   -subj "$CLIENT_NAME" \
-   -config "etc/gen-signing-ca.conf.$ORGA_NAME"
+   -subj "$CLIENT_NAME" 
+   #\
+   #-config "etc/gen-signing-ca.conf.$ORGA_NAME"
 
 echo Sign certificate request with CA
 openssl ca \

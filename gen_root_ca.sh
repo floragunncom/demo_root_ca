@@ -78,10 +78,15 @@ openssl ca \
     -in ca/signing-ca.csr \
     -out ca/signing-ca.pem \
     -extensions signing_ca_ext \
+    -notext \
 	-batch \
 	-passin "pass:$CA_PASS"  >> gen_root.log 2>&1
-	
-openssl x509 -noout -text -in ca/signing-ca.pem >> gen_root.log  2>&1
+
+echo "Verify intermediate ca"
+
+cat ca/signing-ca.pem
+openssl verify -CAfile ca/root-ca.pem ca/signing-ca.pem
+openssl x509 -noout -text -in ca/signing-ca.pem >> gen_root.log
 	
 echo Signing CA generated
 cat ca/signing-ca.pem ca/root-ca.pem > ca/chain-ca.pem
