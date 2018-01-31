@@ -49,7 +49,15 @@ do_install() {
   dolog "somaxconn on $SG_PUBHOST is $(cat /proc/sys/net/core/somaxconn)"
   
   #Netty version
-  #replace netty
+  #replace netty in sg plugin folder
+  #also replace tcnative to match 2.0.7
+  #wget http://central.maven.org/maven2/io/netty/netty-handler/4.1.16.Final/netty-handler-4.1.16.Final.jar
+  #wget http://central.maven.org/maven2/io/netty/netty-buffer/4.1.16.Final/netty-buffer-4.1.16.Final.jar
+  #wget http://central.maven.org/maven2/io/netty/netty-codec/4.1.16.Final/netty-codec-4.1.16.Final.jar
+  #wget http://central.maven.org/maven2/io/netty/netty-codec-http/4.1.16.Final/netty-codec-http-4.1.16.Final.jar
+  #wget http://central.maven.org/maven2/io/netty/netty-common/4.1.16.Final/netty-common-4.1.16.Final.jar
+  #wget http://central.maven.org/maven2/io/netty/netty-resolver/4.1.16.Final/netty-resolver-4.1.16.Final.jar
+  #wget http://central.maven.org/maven2/io/netty/netty-transport/4.1.16.Final/netty-transport-4.1.16.Final.jar
   
   #python perf script
   #https://github.com/floragunncom/search-guard/issues/310
@@ -403,9 +411,6 @@ check_prerequisites() {
   apt-get -yqq install unzip curl git jq apt-transport-https
   apt-get -y autoremove || true
 
-  if ! check_cmd docker; then
-    do_error_exit "docker is not installed"
-  fi
   
   if ! check_cmd curl; then
     do_error_exit "curl is not installed"
@@ -417,10 +422,6 @@ check_prerequisites() {
   
   if ! check_cmd unzip; then
     do_error_exit "unzip is not installed"
-  fi
-  
-  if ! check_cmd ansible; then
-    do_error_exit "ansible is not installed"
   fi
   
   if ! check_cmd aws; then

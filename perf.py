@@ -1,13 +1,16 @@
 import time
 import json
-import elasticsearch
+import ssl
+from elasticsearch import Elasticsearch
+
+#Needs Python3 and elasticsearch
 
 INDEX_NAME = "temp_index"
 TYPE = "type1"
 
 es = Elasticsearch(
-    ['admin:admin@sgssl-0.example.com:9200'],
-    connection_class=RequestsHttpConnection,
+    ['admin:admin@localhost:9200'],
+    #connection_class=RequestsHttpConnection,
     use_ssl=True,
     verify_certs=False,
     #ca_certs='/usr/share/elasticsearch/config/chain-ca.pem',
@@ -18,12 +21,13 @@ es = Elasticsearch(
     )
 
 def generate_large_json():
-    data = {i: i for i in xrange(0, 300000)}
+    data = {i: i for i in range(0, 300000)}
     return json.dumps({"data": data})
 
 
 def create_index_with_temp_data():
     large_json = generate_large_json()
+
 
     mapping = {
         "settings": {
@@ -39,13 +43,17 @@ def create_index_with_temp_data():
             }
         }
     }
+    try:
+        es.indices.delete(INDEX_NAME)
+    except:
+        print("No index to delete")
     es.indices.create(INDEX_NAME, body=mapping)
     es.index(INDEX_NAME, TYPE, large_json, id="data1")
 
 create_index_with_temp_data()
 start = time.time()
-for i in xrange(10):
-    es.get(INDEX_NAME, "data1")
+for i in range(10):
+    es.get(INDEX_NAME, TYPE, "data1")
 end = time.time()
 
 total_time_ms = (end-start)*1000
