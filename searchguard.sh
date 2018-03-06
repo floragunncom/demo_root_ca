@@ -1,13 +1,5 @@
 #!/bin/bash
 set -x
-ES_VERSION=6.1.1
-SG_VERSION=$ES_VERSION-20.1
-SGSSL_VERSION=$ES_VERSION-25.0
-NETTY_NATIVE_VERSION=2.0.7.Final #static lib from bintray, unset for no openssl
-OPENSSL_VERSION=1.0.2n #static lib from bintray
-SG_DISABLED="false"
-SG_SSLONLY="false"
-NETTY_VERSION="4.1.16.Final"
 
 post_slack() {
    curl -X POST --data-urlencode 'payload={"channel": "#aws_notify", "username": "awsbot", "text": "'"$1"'", "icon_emoji": ":cyclone:"}' $SLACKURL > /dev/null 2>&1
