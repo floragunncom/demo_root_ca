@@ -2,15 +2,12 @@
 set -x
 ES_VERSION=6.1.1
 SG_VERSION=$ES_VERSION-20.1
-#SG_KIBANA_VERSION=8
 SGSSL_VERSION=$ES_VERSION-25.0
-NETTY_NATIVE_VERSION=2.0.5.Final
-OPENSSL_VERSION=1.0.2l
+NETTY_NATIVE_VERSION=2.0.7.Final #static lib from bintray, unset for no openssl
+OPENSSL_VERSION=1.0.2n #static lib from bintray
 SG_DISABLED="false"
 SG_SSLONLY="false"
-#MYML="metricbeat.yml"
-#FYML="filebeat.yml"
-#KYML="kibana.yml"
+NETTY_VERSION="4.1.16.Final"
 
 post_slack() {
    curl -X POST --data-urlencode 'payload={"channel": "#aws_notify", "username": "awsbot", "text": "'"$1"'", "icon_emoji": ":cyclone:"}' $SLACKURL > /dev/null 2>&1
@@ -28,55 +25,17 @@ do_install() {
   dolog "Will bootstrap $STACKNAME in $REGION on $SG_PUBHOST ($DIST)"
   
   echo "Stopping services"
-  
-  systemctl stop kibana.service > /dev/null 2>&1
-  systemctl stop metricbeat.service > /dev/null 2>&1
+
   systemctl stop elasticsearch.service > /dev/null 2>&1
-  systemctl stop filebeat.service > /dev/null 2>&1
-  
   
   #Make sure we have enough entropie
   cat /proc/sys/kernel/random/entropy_avail
   dolog "Entropie on $SG_PUBHOST is $(cat /proc/sys/kernel/random/entropy_avail)"
   #rngd -r /dev/urandom -o /dev/random -t 1
   
-  #Use ECDSA
-  
-  #openssl ecparam -name prime256v1 -genkey -param_enc explicit -out private-key.pem 
-  #openssl req -new -x509 -key private-key.pem -out server.pem -days 730 -sha256
-  
   cat /proc/sys/net/core/somaxconn
   dolog "somaxconn on $SG_PUBHOST is $(cat /proc/sys/net/core/somaxconn)"
-  
-  #Netty version
-  #replace netty in sg plugin folder
-  #also replace tcnative to match 2.0.7
-  #wget http://central.maven.org/maven2/io/netty/netty-handler/4.1.16.Final/netty-handler-4.1.16.Final.jar
-  #wget http://central.maven.org/maven2/io/netty/netty-buffer/4.1.16.Final/netty-buffer-4.1.16.Final.jar
-  #wget http://central.maven.org/maven2/io/netty/netty-codec/4.1.16.Final/netty-codec-4.1.16.Final.jar
-  #wget http://central.maven.org/maven2/io/netty/netty-codec-http/4.1.16.Final/netty-codec-http-4.1.16.Final.jar
-  #wget http://central.maven.org/maven2/io/netty/netty-common/4.1.16.Final/netty-common-4.1.16.Final.jar
-  #wget http://central.maven.org/maven2/io/netty/netty-resolver/4.1.16.Final/netty-resolver-4.1.16.Final.jar
-  #wget http://central.maven.org/maven2/io/netty/netty-transport/4.1.16.Final/netty-transport-4.1.16.Final.jar
-  
-  #python perf script
-  #https://github.com/floragunncom/search-guard/issues/310
-  
-  #dolog "Install packages"
-  
-  #apt install -yqq python3-pip
-  #pip3 install esrally
-  #pip3 install requests ndg-httpsclient --upgrade
-  #pip3 install elasticsearch requests cryptography pyopenssl ndg-httpsclient pyasn1
-  #esrally --track=logging --report-file="~/report-$(date).md" --report-format=csv --pipeline=benchmark-only --target-hosts=https://ec2-34-253-194-30.eu-west-1.compute.amazonaws.com:9200,https://ec2-54-154-99-160.eu-west-1.compute.amazonaws.com:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
-  #esrally --track=logging --pipeline=benchmark-only --target-hosts=$(hostname -f):9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'"
-  #nyc_taxis
-  #percolator
-  #--report-file=/path/to/your/report.md
-  #--report-format=csv
-  #--test-mode
-  #nohup esrally --track=logging --report-file="~/report-$(date).md" --report-format=csv --pipeline=benchmark-only --target-hosts=https://ec2-34-253-234-70.eu-west-1.compute.amazonaws.com:9200,https://ec2-54-154-62-50.eu-west-1.compute.amazonaws.com:9200 --client-options "use_ssl:true,verify_certs:False,basic_auth_user:'admin',basic_auth_password:'admin'" &
-  
+    
   if [ ! -f "elasticsearch-$ES_VERSION.deb" ]; then
     wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
     check_ret "Downloading ES"
@@ -84,24 +43,6 @@ do_install() {
   
   dpkg --force-all -i elasticsearch-$ES_VERSION.deb > /dev/null 2>&1
   check_ret "Installing ES"
-  
-  #wget https://artifacts.elastic.co/downloads/beats/metricbeat/metricbeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  #check_ret "Downloading Metricbeat"
-  
-  #dpkg --force-all -i metricbeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  #check_ret "Installing Metricbeat"
-  
-  #wget https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  #check_ret "Downloading filebeat"
-  
-  #dpkg --force-all -i filebeat-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  #check_ret "Installing filebeat"
-  
-  #wget https://artifacts.elastic.co/downloads/kibana/kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  #check_ret "Downloading Kibana"
-  
-  #dpkg --force-all -i kibana-$ES_VERSION-amd64.deb > /dev/null 2>&1
-  #check_ret "Installing Kibana"
   
   # Total memory in KB
   totalMemKB=$(awk '/MemTotal:/ { print $2 }' /proc/meminfo)
@@ -135,7 +76,6 @@ do_install() {
   $ES_BIN/elasticsearch-plugin remove discovery-ec2 > /dev/null 2>&1
   $ES_BIN/elasticsearch-plugin remove search-guard-6 > /dev/null 2>&1
   $ES_BIN/elasticsearch-plugin remove search-guard-ssl > /dev/null 2>&1
-  $ES_BIN/elasticsearch-plugin remove x-pack > /dev/null 2>&1
   
   $ES_BIN/elasticsearch-plugin install -b discovery-ec2 > /dev/null 
   check_ret "Installing discovery-ec2 plugin"
@@ -148,9 +88,6 @@ do_install() {
   fi
   
   check_ret "Installing SG plugin"
-  
-  #$ES_BIN/elasticsearch-plugin install -b x-pack > /dev/null 
-  #check_ret "Installing xpack plugin"
   
   cd /demo_root_ca
   git pull > /dev/null 2>&1
@@ -184,13 +121,21 @@ do_install() {
   
   chmod -R 755 $ES_CONF
   
-  #static version which supports hnv
-  if [ "$SG_SSLONLY" == "false" ]; then
-      wget -O "$ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-linux-x86_64.jar" "https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-$OPENSSL_VERSION-static-$NETTY_NATIVE_VERSION-non-fedora-linux-x86_64.jar" > downloadnetty 2>&1
-      check_ret "Downloading netty native to search-guard-6: $(cat downloadnetty)"
+  rm -rf "$ES_PLUGINS/search-guard-6/netty-tcnative*"
+  rm -rf "$ES_PLUGINS/search-guard-ssl/netty-tcnative*"
+  
+  if [ -z "$NETTY_NATIVE_VERSION" ]; then
+  	dolog "NO TC-NATIVE"
   else
-      wget -O "$ES_PLUGINS/search-guard-ssl/netty-tcnative-$NETTY_NATIVE_VERSION-linux-x86_64.jar" "https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-$OPENSSL_VERSION-static-$NETTY_NATIVE_VERSION-non-fedora-linux-x86_64.jar" > downloadnetty 2>&1
-      check_ret "Downloading netty native to search-guard-ssl: $(cat downloadnetty)"
+      dolog "TC-NATIVE $OPENSSL_VERSION-static-$NETTY_NATIVE_VERSION"
+	  #static version which supports hnv
+	  if [ "$SG_SSLONLY" == "false" ]; then
+		  wget -O "$ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-linux-x86_64.jar" "https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-$OPENSSL_VERSION-static-$NETTY_NATIVE_VERSION-non-fedora-linux-x86_64.jar" > downloadnetty 2>&1
+		  check_ret "Downloading netty native to search-guard-6: $(cat downloadnetty)"
+	  else
+		  wget -O "$ES_PLUGINS/search-guard-ssl/netty-tcnative-$NETTY_NATIVE_VERSION-linux-x86_64.jar" "https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-$OPENSSL_VERSION-static-$NETTY_NATIVE_VERSION-non-fedora-linux-x86_64.jar" > downloadnetty 2>&1
+		  check_ret "Downloading netty native to search-guard-ssl: $(cat downloadnetty)"
+	  fi
   fi
 
   
@@ -216,10 +161,6 @@ do_install() {
   echo "path.logs: /var/log/elasticsearch" >> $ES_CONF/elasticsearch.yml
   echo "path.data: /mnt/esdata" >> $ES_CONF/elasticsearch.yml
   #echo "discovery.zen.minimum_master_nodes: 2" >> $ES_CONF/elasticsearch.yml
-  #echo "xpack.security.enabled: false" >> $ES_CONF/elasticsearch.yml
-  #echo "xpack.watcher.enabled: false" >> $ES_CONF/elasticsearch.yml
-  #echo "xpack.monitoring.enabled: true" >> $ES_CONF/elasticsearch.yml
-  #echo "xpack.ml.enabled: false" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
   echo "" >> $ES_CONF/elasticsearch.yml
@@ -247,7 +188,7 @@ do_install() {
   # Trusted certificates
   echo "searchguard.ssl.transport.pemtrustedcas_filepath: chain-ca.pem" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.transport.enforce_hostname_verification: false" >> $ES_CONF/elasticsearch.yml
-  echo "searchguard.ssl.transport.enabled_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.transport.enabled_ciphers: TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256" >> $ES_CONF/elasticsearch.yml
 
   echo "searchguard.ssl.http.enabled: true" >> $ES_CONF/elasticsearch.yml
   #echo "searchguard.ssl.http.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
@@ -256,7 +197,7 @@ do_install() {
   echo "searchguard.ssl.http.pemkey_password: changeit" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.pemcert_filepath: CN=$SG_PUBHOST.chain.pem" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.pemtrustedcas_filepath: chain-ca.pem" >> $ES_CONF/elasticsearch.yml
-  echo "searchguard.ssl.http.enabled_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.http.enabled_ciphers: TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256" >> $ES_CONF/elasticsearch.yml
 
   if [ "$SG_SSLONLY" == "false" ]; then
   
@@ -269,6 +210,30 @@ do_install() {
   
 	  echo 'searchguard.restapi.roles_enabled: ["sg_all_access"]' >> $ES_CONF/elasticsearch.yml
 
+  fi
+  
+  if [ -z "$NETTY_VERSION" ]; then
+  	dolog "no special netty version"
+  else
+      dolog "netty version $NETTY_VERSION"
+	  #static version which supports hnv
+	  if [ "$SG_SSLONLY" == "false" ]; then
+		  cd "$ES_PLUGINS/search-guard-6/"
+	  else
+		  cd "$ES_PLUGINS/search-guard-ssl/"
+	  fi
+	  
+	  rm -rf netty-*4.1*
+      wget "http://central.maven.org/maven2/io/netty/netty-handler/$NETTY_VERSION/netty-handler-$NETTY_VERSION.jar"
+      wget "http://central.maven.org/maven2/io/netty/netty-buffer/$NETTY_VERSION/netty-buffer-$NETTY_VERSION.jar"
+      wget "http://central.maven.org/maven2/io/netty/netty-codec/$NETTY_VERSION/netty-codec-$NETTY_VERSION.jar"
+      wget "http://central.maven.org/maven2/io/netty/netty-codec-http/$NETTY_VERSION/netty-codec-http-$NETTY_VERSION.jar"
+      wget "http://central.maven.org/maven2/io/netty/netty-common/$NETTY_VERSION/netty-common-$NETTY_VERSION.jar"
+      wget "http://central.maven.org/maven2/io/netty/netty-resolver/$NETTY_VERSION/netty-resolver-$NETTY_VERSION.jar"
+      wget "http://central.maven.org/maven2/io/netty/netty-transport/$NETTY_VERSION/netty-transport-$NETTY_VERSION.jar"
+  
+      cd -
+	  
   fi
   
   mkdir -p /mnt/esdata
@@ -287,16 +252,6 @@ do_install() {
   echo "MAX_MAP_COUNT=262144"  >> /etc/default/elasticsearch
   
   echo "elasticsearch  -  nofile  1000000" >> /etc/security/limits.conf
-  
-  #filebeat  
-  #cat "/demo_root_ca/filebeat/$FYML" | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/filebeat/filebeat.yml
-
-  #/bin/systemctl daemon-reload
-
-  #/bin/systemctl enable filebeat.service
-  #systemctl start filebeat.service
-  #filebeat end
-
  
   check_ret "daemon-reload"
   /bin/systemctl enable elasticsearch.service
@@ -343,33 +298,6 @@ do_install() {
   fi
   
   dolog "Finished"
-  #no kibana and metricbeat
-  exit 0
-  
-  #dolog "Install Kibana"
-
-   if [ "$SG_DISABLED" == "false" ] && [ "$SG_SSLONLY" == "false" ]; then
-      /usr/share/kibana/bin/kibana-plugin install https://oss.sonatype.org/content/repositories/releases/com/floragunn/search-guard-kibana-plugin/$ES_VERSION-$SG_KIBANA_VERSION/search-guard-kibana-plugin-$ES_VERSION-$SG_KIBANA_VERSION.zip
-   fi
-  
-  /usr/share/kibana/bin/kibana-plugin install x-pack
-  cat "/demo_root_ca/kibana/$KYML" | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/kibana/kibana.yml 
-  #echo 'searchguard.cookie.password: "a12345678912345678912345678912345678987654c"' >> /etc/kibana/kibana.yml 
-  chown -R kibana /usr/share/kibana/
-
-  /bin/systemctl enable kibana.service
-  systemctl start kibana.service  
-  
-  dolog "Kibana $SG_VERSION running on https://$SG_PUBHOST:5601"
-  
-  #dolog "Install Metricbeat"
-  
-  cat "/demo_root_ca/metricbeat/$MYML" | sed -e "s/RPLC_HOST/$SG_PUBHOST/g" > /etc/metricbeat/metricbeat.yml
-
-  /bin/systemctl enable metricbeat.service
-  systemctl start metricbeat.service
-  dolog "Finished"
-  
 }
 
 
