@@ -180,7 +180,7 @@ do_install() {
   # Trusted certificates
   echo "searchguard.ssl.transport.pemtrustedcas_filepath: chain-ca.pem" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.transport.enforce_hostname_verification: false" >> $ES_CONF/elasticsearch.yml
-  echo "searchguard.ssl.transport.enabled_ciphers: TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.transport.enabled_ciphers: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256" >> $ES_CONF/elasticsearch.yml
 
   echo "searchguard.ssl.http.enabled: true" >> $ES_CONF/elasticsearch.yml
   #echo "searchguard.ssl.http.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
@@ -189,7 +189,7 @@ do_install() {
   echo "searchguard.ssl.http.pemkey_password: changeit" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.pemcert_filepath: CN=$SG_PUBHOST.chain.pem" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.pemtrustedcas_filepath: chain-ca.pem" >> $ES_CONF/elasticsearch.yml
-  echo "searchguard.ssl.http.enabled_ciphers: TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.ssl.http.enabled_ciphers: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256" >> $ES_CONF/elasticsearch.yml
 
   if [ "$SG_SSLONLY" == "false" ]; then
   
