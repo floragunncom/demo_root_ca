@@ -32,3 +32,17 @@ sg_manage_snapshots:
 sg_own_index:
   users:
     - '*'
+    
+sg_fls_sgperftest1_type1:
+  users:
+    - flsonly
+    - flsdls
+    
+sg_dls_sgperftest1_type1:
+  users:
+    - dlsonly
+    - flsdls
+
+sg_dls_sgperftest1_range:
+  users:
+    - flsdls

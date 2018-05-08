@@ -79,7 +79,7 @@ sg_kibana_user:
   readonly: true
   cluster:
     - MONITOR
-    - CLUSTER_COMPOSITE_OPS_RO
+    - CLUSTER_COMPOSITE_OPS
   indices:
     '?kibana':
       '*':
@@ -87,9 +87,15 @@ sg_kibana_user:
         - INDEX
         - READ
         - DELETE
+    '?kibana-6':
+      '*':
+        - MANAGE
+        - INDEX
+        - READ
+        - DELETE
     '*':
       '*':
-        - indices:data/read/field_caps
+        - indices:data/read/field_caps*
 
 # For the kibana server
 sg_kibana_server:
@@ -103,6 +109,9 @@ sg_kibana_server:
     '?kibana':
       '*':
         - INDICES_ALL
+    '?kibana-6':
+      '*':
+        - INDICES_ALL
     '?reporting*':
       '*':
         - INDICES_ALL
@@ -111,8 +120,7 @@ sg_kibana_server:
         - INDICES_ALL
 
 # For logstash and beats
-sg_logstash:
-  readonly: true
+sg_logstash:  
   cluster:
     - CLUSTER_MONITOR
     - CLUSTER_COMPOSITE_OPS
@@ -130,7 +138,6 @@ sg_logstash:
 
 # Allows adding and modifying repositories and creating and restoring snapshots
 sg_manage_snapshots:
-  readonly: true
   cluster:
     - MANAGE_SNAPSHOTS
   indices:
@@ -255,3 +262,34 @@ sg_alerting:
     '*':
       '*':
         - READ
+
+sg_dls_sgperftest1_type1:
+  indices:
+    'sgperftest':
+      '*':
+        - '*'
+      _dls_: '{"term" : {"doctype" : "type1"}}'
+        
+sg_fls_sgperftest1_type1:
+  indices:
+    'sgperftest':
+      '*':
+        - '*'
+      _fls_:
+        - doctype
+        - field1
+
+sg_dls_sgperftest1_range:
+  indices:
+    'sgperftest':
+      '*':
+        - '*'
+      _dls_: | 
+                 {
+                   "range" : {
+                      "docsize" : {
+                          "gte" : 10,
+                          "lte" : 200
+                      }
+                    }
+                 }
