@@ -264,6 +264,8 @@ sg_alerting:
         - READ
 
 sg_comp_sgperftest1:
+  cluster:
+    - UNLIMITED
   indices:
     'sgperftest':
       '*':
@@ -276,6 +278,8 @@ sg_comp_sgperftest1:
       _dls_: '{"term" : {"doctype" : "type1"}}'
 
 sg_dls_sgperftest1_type1:
+  cluster:
+    - UNLIMITED
   indices:
     'sgperftest':
       '*':
@@ -283,6 +287,8 @@ sg_dls_sgperftest1_type1:
       _dls_: '{"term" : {"doctype" : "type1"}}'
         
 sg_fls_sgperftest1_type1:
+  cluster:
+    - UNLIMITED
   indices:
     'sgperftest':
       '*':
@@ -292,6 +298,8 @@ sg_fls_sgperftest1_type1:
         - field1
 
 sg_dls_sgperftest1_range:
+  cluster:
+    - UNLIMITED
   indices:
     'sgperftest':
       '*':
