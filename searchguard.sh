@@ -74,9 +74,18 @@ do_install() {
   
   #INSTALL PLUGIN
   if [ "$SG_SSLONLY" == "true" ]; then
-      $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-ssl:$SGSSL_VERSION
+  	  if [[ $SGSSL_VERSION = *"http"* ]]; then
+  	      $ES_BIN/elasticsearch-plugin install -b "$SGSSL_VERSION" > /dev/null 
+  	  else
+          $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-ssl:$SGSSL_VERSION > /dev/null 
+      fi
   else
-      $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-6:$SG_VERSION > /dev/null 
+      
+      if [[ $SG_VERSION = *"http"* ]]; then
+  	      $ES_BIN/elasticsearch-plugin install -b "$SG_VERSION" > /dev/null 
+  	  else
+          $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-6:$SG_VERSION > /dev/null 
+      fi
   fi
   
   check_ret "Installing SG plugin"
