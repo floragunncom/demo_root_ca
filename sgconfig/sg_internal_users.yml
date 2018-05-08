@@ -55,3 +55,7 @@ dlsonly:
 flsdls:
   hash: $2a$12$ae4ycwzwvLtZxwZ82RmiEunBbIPiAmGZduBAjKN0TXdwQFtCwARz2
   #password is: readall
+  
+comp:
+  hash: $2a$12$ae4ycwzwvLtZxwZ82RmiEunBbIPiAmGZduBAjKN0TXdwQFtCwARz2
+  #password is: readall

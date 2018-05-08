@@ -263,6 +263,18 @@ sg_alerting:
       '*':
         - READ
 
+sg_comp_sgperftest1:
+  indices:
+    'sgperftest':
+      '*':
+        - '*'
+      _masked_fields_:
+        - field2
+        - field4
+      _fls_:
+        - field*
+      _dls_: '{"term" : {"doctype" : "type1"}}'
+
 sg_dls_sgperftest1_type1:
   indices:
     'sgperftest':

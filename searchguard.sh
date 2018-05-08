@@ -179,6 +179,18 @@ do_install() {
   echo "#                                                " >> $ES_CONF/elasticsearch.yml
   echo "##################################################" >> $ES_CONF/elasticsearch.yml	
 
+######## compliance
+if [ "$SG_COMPLIANCE" == "true" ]; then
+ echo "searchguard.compliance.history.external_config_enabled: true" >> $ES_CONF/elasticsearch.yml
+ echo "searchguard.compliance.history.internal_config_enabled: true" >> $ES_CONF/elasticsearch.yml
+ echo "searchguard.compliance.history.metadata_only: false" >> $ES_CONF/elasticsearch.yml
+ echo 'searchguard.compliance.history.read.watched_fields: "*,*"' >> $ES_CONF/elasticsearch.yml
+ echo 'searchguard.compliance.history.write.watched_indices: "*"' >> $ES_CONF/elasticsearch.yml
+ echo "searchguard.compliance.history.write.diffs_only: false" >> $ES_CONF/elasticsearch.yml
+fi
+#######
+
+
   #echo "searchguard.ssl.transport.keystore_filepath: CN=$SG_PUBHOST-keystore.jks" >> $ES_CONF/elasticsearch.yml
   #echo "searchguard.ssl.transport.truststore_filepath: truststore.jks" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.transport.pemkey_filepath: CN=$SG_PUBHOST.key" >> $ES_CONF/elasticsearch.yml

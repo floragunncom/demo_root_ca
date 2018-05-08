@@ -33,6 +33,10 @@ sg_own_index:
   users:
     - '*'
     
+sg_comp_sgperftest1:
+  users:
+    - comp
+    
 sg_fls_sgperftest1_type1:
   users:
     - flsonly
