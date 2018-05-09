@@ -274,7 +274,8 @@ sg_comp_sgperftest1:
         - field2
         - field4
       _fls_:
-        - field*
+        - 'field*'
+        - doctype
       _dls_: '{"term" : {"doctype" : "type1"}}'
 
 sg_dls_sgperftest1_type1:
@@ -284,6 +285,8 @@ sg_dls_sgperftest1_type1:
     'sgperftest':
       '*':
         - '*'
+      _fls_:
+        - doctype
       _dls_: '{"term" : {"doctype" : "type1"}}'
         
 sg_fls_sgperftest1_type1:
@@ -304,6 +307,8 @@ sg_dls_sgperftest1_range:
     'sgperftest':
       '*':
         - '*'
+      _fls_:
+        - docsize
       _dls_: | 
                  {
                    "range" : {
