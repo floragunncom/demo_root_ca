@@ -68,6 +68,7 @@ do_install() {
   $ES_BIN/elasticsearch-plugin remove discovery-ec2 > /dev/null 2>&1
   $ES_BIN/elasticsearch-plugin remove search-guard-6 > /dev/null 2>&1
   $ES_BIN/elasticsearch-plugin remove search-guard-ssl > /dev/null 2>&1
+  $ES_BIN/elasticsearch-plugin remove repository-s3 > /dev/null 2>&1
   
   $ES_BIN/elasticsearch-plugin install -b discovery-ec2 > /dev/null 
   check_ret "Installing discovery-ec2 plugin"
@@ -89,6 +90,9 @@ do_install() {
   fi
   
   check_ret "Installing SG plugin"
+  
+  
+  $ES_BIN/elasticsearch-plugin install -b repository-s3 > /dev/null 
   
   cd /demo_root_ca
   git pull > /dev/null 2>&1
@@ -213,6 +217,7 @@ fi
   echo "searchguard.ssl.http.pemkey_password: changeit" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.pemcert_filepath: CN=$SG_PUBHOST.chain.pem" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.pemtrustedcas_filepath: chain-ca.pem" >> $ES_CONF/elasticsearch.yml
+  echo "searchguard.enable_snapshot_restore_privilege: true" >> $ES_CONF/elasticsearch.yml
   
   if ! [ -z "$CIPHER" ]; then
       echo "searchguard.ssl.http.enabled_ciphers: $CIPHER" >> $ES_CONF/elasticsearch.yml
