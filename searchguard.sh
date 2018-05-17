@@ -66,7 +66,7 @@ do_install() {
   echo "SG_PRIVHOST: $SG_PRIVHOST"
   
   $ES_BIN/elasticsearch-plugin remove discovery-ec2 > /dev/null 2>&1
-  $ES_BIN/elasticsearch-plugin remove search-guard-6 > /dev/null 2>&1
+  $ES_BIN/elasticsearch-plugin remove search-guard-5 > /dev/null 2>&1
   $ES_BIN/elasticsearch-plugin remove search-guard-ssl > /dev/null 2>&1
   $ES_BIN/elasticsearch-plugin remove repository-s3 > /dev/null 2>&1
   
@@ -85,7 +85,7 @@ do_install() {
       if [[ $SG_VERSION = *"http"* ]]; then
   	      $ES_BIN/elasticsearch-plugin install -b "$SG_VERSION" > /dev/null 
   	  else
-          $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-6:$SG_VERSION > /dev/null 
+          $ES_BIN/elasticsearch-plugin install -b com.floragunn:search-guard-5:$SG_VERSION > /dev/null 
       fi
   fi
   
@@ -126,7 +126,7 @@ do_install() {
   
   chmod -R 755 $ES_CONF
   
-  rm -rf "$ES_PLUGINS/search-guard-6/netty-tcnative*"
+  rm -rf "$ES_PLUGINS/search-guard-5/netty-tcnative*"
   rm -rf "$ES_PLUGINS/search-guard-ssl/netty-tcnative*"
   
   if [ -z "$NETTY_NATIVE_VERSION" ]; then
@@ -135,8 +135,8 @@ do_install() {
       dolog "TC-NATIVE $OPENSSL_VERSION-static-$NETTY_NATIVE_VERSION"
 	  #static version which supports hnv
 	  if [ "$SG_SSLONLY" == "false" ]; then
-		  wget -O "$ES_PLUGINS/search-guard-6/netty-tcnative-$NETTY_NATIVE_VERSION-linux-x86_64.jar" "https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-$OPENSSL_VERSION-static-$NETTY_NATIVE_VERSION-non-fedora-linux-x86_64.jar" > downloadnetty 2>&1
-		  check_ret "Downloading netty native to search-guard-6: $(cat downloadnetty)"
+		  wget -O "$ES_PLUGINS/search-guard-5/netty-tcnative-$NETTY_NATIVE_VERSION-linux-x86_64.jar" "https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-$OPENSSL_VERSION-static-$NETTY_NATIVE_VERSION-non-fedora-linux-x86_64.jar" > downloadnetty 2>&1
+		  check_ret "Downloading netty native to search-guard-5: $(cat downloadnetty)"
 	  else
 		  wget -O "$ES_PLUGINS/search-guard-ssl/netty-tcnative-$NETTY_NATIVE_VERSION-linux-x86_64.jar" "https://bintray.com/floragunncom/netty-tcnative/download_file?file_path=netty-tcnative-openssl-$OPENSSL_VERSION-static-$NETTY_NATIVE_VERSION-non-fedora-linux-x86_64.jar" > downloadnetty 2>&1
 		  check_ret "Downloading netty native to search-guard-ssl: $(cat downloadnetty)"
@@ -173,7 +173,7 @@ do_install() {
   
   
   echo "##################################################" >> $ES_CONF/elasticsearch.yml
-  echo "#          Search Guard 6 configuration          " >> $ES_CONF/elasticsearch.yml
+  echo "#          Search Guard 5 configuration          " >> $ES_CONF/elasticsearch.yml
   echo "#                                                " >> $ES_CONF/elasticsearch.yml
   echo "#Host: $SG_PUBHOST    $SG_PRIVHOST               " >> $ES_CONF/elasticsearch.yml
   echo "#Generated: $(date)                              " >> $ES_CONF/elasticsearch.yml
@@ -232,7 +232,7 @@ fi
 	  echo "searchguard.authcz.admin_dn:">> $ES_CONF/elasticsearch.yml
 	  echo "  - CN=sgadmin" >> $ES_CONF/elasticsearch.yml
   
-	  echo 'searchguard.restapi.roles_enabled: ["sg_all_access"]' >> $ES_CONF/elasticsearch.yml
+	  #echo 'searchguard.restapi.roles_enabled: ["sg_all_access"]' >> $ES_CONF/elasticsearch.yml
 
   fi
   
@@ -242,7 +242,7 @@ fi
       dolog "netty version $NETTY_VERSION"
 	  #static version which supports hnv
 	  if [ "$SG_SSLONLY" == "false" ]; then
-		  cd "$ES_PLUGINS/search-guard-6/"
+		  cd "$ES_PLUGINS/search-guard-5/"
 	  else
 		  cd "$ES_PLUGINS/search-guard-ssl/"
 	  fi
@@ -299,8 +299,8 @@ fi
   
      dolog "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
   
-     chmod +x $ES_PLUGINS/search-guard-6/tools/sgadmin.sh
-     $ES_PLUGINS/search-guard-6/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PUBHOST -icl -cacert $ES_CONF/root-ca.pem -cert $ES_CONF/CN=sgadmin.chain.pem -key $ES_CONF/CN=sgadmin.key -keypass changeit -nhnv
+     chmod +x $ES_PLUGINS/search-guard-5/tools/sgadmin.sh
+     $ES_PLUGINS/search-guard-5/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PUBHOST -icl -cacert $ES_CONF/root-ca.pem -cert $ES_CONF/CN=sgadmin.chain.pem -key $ES_CONF/CN=sgadmin.key -keypass changeit -nhnv
      check_ret "running sgadmin"
      post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
   
