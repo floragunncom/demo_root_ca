@@ -330,7 +330,7 @@ fi
 		  }
 		}'
 		
-	  curl -XPOST -k -u admin:admin "https://$SG_PUBHOST:9200/_snapshot/mys3reposg5/snapshot_2/_restore
+	  curl -XPOST -k -u admin:admin "https://$SG_PUBHOST:9200/_snapshot/mys3reposg5/snapshot_2/_restore"
   
   fi
   
