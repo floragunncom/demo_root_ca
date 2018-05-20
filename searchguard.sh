@@ -322,13 +322,15 @@ fi
 	  }'
 	  
 	  #register s3 snapshot repo
-	  curl -XPUT -k -u admin:admin  "https://$SG_PUBHOST:9200/_snapshot/mys3reposg5" -H 'Content-Type: application/json' -d'
+	  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/_snapshot/mys3reposg5" -H 'Content-Type: application/json' -d'
 		{
 		  "type": "s3",
 		  "settings": {
 			"bucket": "sgperftest5"
 		  }
 		}'
+		
+	  curl -XPOST -k -u admin:admin "https://$SG_PUBHOST:9200/_snapshot/mys3reposg5/snapshot_2/_restore
   
   fi
   
