@@ -327,6 +327,9 @@ fi
 			"bucket": "sgperftest"
 		  }
 		}'
+		
+	  curl -XPOST -k -u admin:admin "https://$SG_PUBHOST:9200/_snapshot/mys3reposg/snapshot_2/_restore"
+
   
   fi
   
