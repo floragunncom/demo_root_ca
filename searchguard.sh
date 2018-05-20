@@ -50,8 +50,8 @@ do_install() {
   
   #dolog "Half Ram: ${heapMB}m"
   
-  sed -i -e "s/-Xmx1g/-Xmx${heapMB}m/g" /etc/elasticsearch/jvm.options
-  sed -i -e "s/-Xms1g/-Xms${heapMB}m/g" /etc/elasticsearch/jvm.options
+  sed -i -e "s/-Xmx2g/-Xmx${heapMB}m/g" /etc/elasticsearch/jvm.options
+  sed -i -e "s/-Xms2g/-Xms${heapMB}m/g" /etc/elasticsearch/jvm.options
   
   #dolog "$(cat /etc/elasticsearch/jvm.options)"
 
