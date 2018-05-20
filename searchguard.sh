@@ -54,6 +54,7 @@ do_install() {
   sed -i -e "s/-Xms2g/-Xms${heapMB}m/g" /etc/elasticsearch/jvm.options
   
   #dolog "$(cat /etc/elasticsearch/jvm.options)"
+  post_slack "$(cat /etc/elasticsearch/jvm.options)"
 
   export ES_BIN=/usr/share/elasticsearch/bin
   export ES_CONF=/etc/elasticsearch
@@ -298,6 +299,7 @@ fi
   if [ "$SG_DISABLED" == "false" ] && [ "$SG_SSLONLY" == "false" ]; then
   
      dolog "run sgadmin $SG_PUBHOST $SG_PRIVHOST"
+     post_slack "$ES_PLUGINS/search-guard-5/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PUBHOST -icl -cacert $ES_CONF/root-ca.pem -cert $ES_CONF/CN=sgadmin.chain.pem -key $ES_CONF/CN=sgadmin.key -keypass changeit -nhnv"
   
      chmod +x $ES_PLUGINS/search-guard-5/tools/sgadmin.sh
      $ES_PLUGINS/search-guard-5/tools/sgadmin.sh -cd /demo_root_ca/sgconfig -h $SG_PUBHOST -icl -cacert $ES_CONF/root-ca.pem -cert $ES_CONF/CN=sgadmin.chain.pem -key $ES_CONF/CN=sgadmin.key -keypass changeit -nhnv
