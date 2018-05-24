@@ -187,10 +187,12 @@ do_install() {
 if [ "$SG_COMPLIANCE" == "true" ]; then
  echo "searchguard.compliance.history.external_config_enabled: true" >> $ES_CONF/elasticsearch.yml
  echo "searchguard.compliance.history.internal_config_enabled: true" >> $ES_CONF/elasticsearch.yml
- echo "searchguard.compliance.history.metadata_only: false" >> $ES_CONF/elasticsearch.yml
  echo 'searchguard.compliance.history.read.watched_fields: "*,*"' >> $ES_CONF/elasticsearch.yml
  echo 'searchguard.compliance.history.write.watched_indices: "*"' >> $ES_CONF/elasticsearch.yml
- echo "searchguard.compliance.history.write.diffs_only: false" >> $ES_CONF/elasticsearch.yml
+ echo 'searchguard.compliance.history.write.metadata_only: false' >> $ES_CONF/elasticsearch.yml
+ echo 'searchguard.compliance.history.read.metadata_only: false' >> $ES_CONF/elasticsearch.yml
+ # slow until 6.3.x
+ echo 'searchguard.compliance.history.write.log_diffs: false' >> $ES_CONF/elasticsearch.yml
 fi
 #######
 
