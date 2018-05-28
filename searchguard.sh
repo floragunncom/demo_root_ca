@@ -11,10 +11,13 @@ do_install() {
   mount -a
   
   export REGION=$(wget -qO- http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//' | tr -d '"')
-  export STACKNAME="sgaws" #$(aws ec2 describe-instances --filters "Name=ip-address,Values=$(ec2metadata --public-ipv4)" --region $REGION | jq '.Reservations[0].Instances[0].Tags | map(select (.Key == "aws:cloudformation:stack-name" )) ' | jq .[0].Value | tr -d '"')
+  export INSTANCE_ID="$(curl -s http://169.254.169.254/latest/meta-data/instance-id)"
+  export AUTOSCALING_GROUP_NAME="$(aws autoscaling describe-auto-scaling-groups --region $REGION | jq --raw-output ".[] | map(select(.Instances[].InstanceId | contains(\"$INSTANCE_ID\"))) | .[].AutoScalingGroupName")"  
+  export STACKNAME=$(aws ec2 describe-tags --region $REGION --filters "Name=resource-id,Values=${INSTANCE_ID}" | grep -2 stack | grep Value | tr -d ' ' | cut -f2 -d: | tr -d '"' | tr -d ','))
   export SG_PUBHOST=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
   export SG_PRIVHOST=$(curl -s http://169.254.169.254/latest/meta-data/hostname)
   dolog "Will bootstrap $STACKNAME in $REGION on $SG_PUBHOST ($DIST)"
+  dolog "Instanceid: $INSTANCE_ID autoscalinggroup: $AUTOSCALING_GROUP_NAME"
   
   echo "Stopping services"
 
@@ -151,6 +154,7 @@ do_install() {
   echo "discovery.zen.hosts_provider: ec2" >> $ES_CONF/elasticsearch.yml
   echo "discovery.ec2.host_type: public_dns" >> $ES_CONF/elasticsearch.yml
   echo 'discovery.ec2.endpoint: ec2.eu-west-1.amazonaws.com' >> $ES_CONF/elasticsearch.yml
+  echo 'discovery.ec2.tag.stack: $STACKNAME' >> $ES_CONF/elasticsearch.yml
   echo "network.host: _ec2:publicDns_" >> $ES_CONF/elasticsearch.yml
   echo "transport.host: _ec2:publicDns_" >> $ES_CONF/elasticsearch.yml
   echo "transport.tcp.port: 9300" >> $ES_CONF/elasticsearch.yml
