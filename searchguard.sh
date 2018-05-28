@@ -16,7 +16,7 @@ do_install() {
   export STACKNAME=$(aws ec2 describe-tags --region $REGION --filters "Name=resource-id,Values=${INSTANCE_ID}" | grep -2 stack | grep Value | tr -d ' ' | cut -f2 -d: | tr -d '"' | tr -d ',')
   export SG_PUBHOST=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
   export SG_PRIVHOST=$(curl -s http://169.254.169.254/latest/meta-data/hostname)
-  dolog "Will bootstrap $STACKNAME in $REGION on $SG_PUBHOST ($DIST)"
+  dolog "Will bootstrap stack: $STACKNAME in $REGION on $SG_PUBHOST ($DIST)"
   dolog "Instanceid: $INSTANCE_ID autoscalinggroup: $AUTOSCALING_GROUP_NAME"
   
   echo "Stopping services"
