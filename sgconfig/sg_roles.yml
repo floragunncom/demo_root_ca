@@ -273,10 +273,10 @@ sg_comp_sgperftest1:
       _masked_fields_:
         - field2
         - field4
-      _fls_:
-        - 'field*'
-        - doctype
-      _dls_: '{"term" : {"doctype" : "type1"}}'
+      #_fls_:
+      #  - 'field*'
+      #  - doctype
+      #_dls_: '{"term" : {"doctype" : "type1"}}'
 
 sg_dls_sgperftest1_type1:
   cluster:
