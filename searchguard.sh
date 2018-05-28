@@ -160,7 +160,7 @@ do_install() {
   echo "discovery.zen.hosts_provider: ec2" >> $ES_CONF/elasticsearch.yml
   echo "discovery.ec2.host_type: public_dns" >> $ES_CONF/elasticsearch.yml
   echo 'discovery.ec2.endpoint: ec2.eu-west-1.amazonaws.com' >> $ES_CONF/elasticsearch.yml
-  echo 'discovery.ec2.tag.stack: $STACKNAME' >> $ES_CONF/elasticsearch.yml
+  echo "discovery.ec2.tag.stack: $STACKNAME" >> $ES_CONF/elasticsearch.yml
   echo "network.host: _ec2:publicDns_" >> $ES_CONF/elasticsearch.yml
   echo "transport.host: _ec2:publicDns_" >> $ES_CONF/elasticsearch.yml
   echo "transport.tcp.port: 9300" >> $ES_CONF/elasticsearch.yml
