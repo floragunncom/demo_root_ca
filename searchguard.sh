@@ -14,6 +14,12 @@ do_install() {
   export INSTANCE_ID="$(curl -s http://169.254.169.254/latest/meta-data/instance-id)"
   export AUTOSCALING_GROUP_NAME="$(aws autoscaling describe-auto-scaling-groups --region $REGION | jq --raw-output ".[] | map(select(.Instances[].InstanceId | contains(\"$INSTANCE_ID\"))) | .[].AutoScalingGroupName")"  
   export STACKNAME=$(aws ec2 describe-tags --region $REGION --filters "Name=resource-id,Values=${INSTANCE_ID}" | grep -2 stack | grep Value | tr -d ' ' | cut -f2 -d: | tr -d '"' | tr -d ',')
+  
+  if [ -z "$STACKNAME" ];then
+  	dolog "empty STACKNAME $STACKNAME"
+  	exit -1
+  fi
+  
   export SG_PUBHOST=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
   export SG_PRIVHOST=$(curl -s http://169.254.169.254/latest/meta-data/hostname)
   dolog "Will bootstrap stack: $STACKNAME in $REGION on $SG_PUBHOST ($DIST)"
