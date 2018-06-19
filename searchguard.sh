@@ -233,7 +233,7 @@ fi
   echo "searchguard.enable_snapshot_restore_privilege: true" >> $ES_CONF/elasticsearch.yml
   
 
-  if [ -d "$ES_MODULES_DIR/x-pack" ] || [ -d "$ES_PLUGINS/x-pack" ];then
+  if [ -d "$ES_MODULES/x-pack" ] || [ -d "$ES_PLUGINS/x-pack" ];then
 	    echo "xpack.security.enabled: false" >> $ES_CONF/elasticsearch.yml
   fi
 
@@ -305,9 +305,15 @@ fi
   sleep 25
   
   counter=1
-  while [ ! nc -z $SG_PUBHOST 9200 -a $counter -lt 10 ]  > /dev/null 2>&1; do
+  while [ ! nc -z $SG_PUBHOST 9200 ] > /dev/null 2>&1; do
     dolog "Wait for elasticsearch ..."
     ((counter++))
+    
+    if [ $counter -gt 10 ];then
+        dolog "elasticsearch seems to have a problem ..."
+        exit -1
+    fi 
+    
     sleep 15
     dolog "$(cat /var/log/elasticsearch/*)"
   done
