@@ -305,7 +305,7 @@ fi
   sleep 25
   
   counter=1
-  while [ ! nc -z $SG_PUBHOST 9200 ] && [ $counter -lt 10 ]  > /dev/null 2>&1; do
+  while [ ! nc -z $SG_PUBHOST 9200 -a $counter -lt 10 ]  > /dev/null 2>&1; do
     dolog "Wait for elasticsearch ..."
     ((counter++))
     sleep 15
