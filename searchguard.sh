@@ -68,6 +68,7 @@ do_install() {
   export ES_CONF=/etc/elasticsearch
   export ES_LOG=/var/log/elasticsearch
   export ES_PLUGINS=/usr/share/elasticsearch/plugins
+  export ES_MODULES=/usr/share/elasticsearch/modules
   
   ORG_NAME="Example Inc."
   
@@ -231,6 +232,12 @@ fi
   echo "searchguard.ssl.http.pemtrustedcas_filepath: chain-ca.pem" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.enable_snapshot_restore_privilege: true" >> $ES_CONF/elasticsearch.yml
   
+
+  if [ -d "$ES_MODULES_DIR/x-pack" ] || [ -d "$ES_PLUGINS/x-pack" ];then
+	    echo "xpack.security.enabled: false" >> $ES_CONF/elasticsearch.yml
+  fi
+
+  
   if ! [ -z "$CIPHER" ]; then
       echo "searchguard.ssl.http.enabled_ciphers: $CIPHER" >> $ES_CONF/elasticsearch.yml
   fi
@@ -297,8 +304,10 @@ fi
   
   sleep 25
   
-  while ! nc -z $SG_PUBHOST 9200 > /dev/null 2>&1; do
+  counter=1
+  while [ ! nc -z $SG_PUBHOST 9200 ] && [ $counter -le 10 ]  > /dev/null 2>&1; do
     dolog "Wait for elasticsearch ..."
+    ((counter++))
     sleep 15
     dolog "$(cat /var/log/elasticsearch/*)"
   done
