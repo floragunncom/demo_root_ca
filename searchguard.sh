@@ -204,6 +204,8 @@ if [ "$SG_COMPLIANCE" == "true" ]; then
  echo 'searchguard.compliance.history.read.metadata_only: false' >> $ES_CONF/elasticsearch.yml
  # slow until 6.3.x
  echo 'searchguard.compliance.history.write.log_diffs: false' >> $ES_CONF/elasticsearch.yml
+ #log4j when compliance is enabled
+ echo "searchguard.audit.type: log4j" >> $ES_CONF/elasticsearch.yml
 fi
 #######
 
@@ -248,7 +250,9 @@ fi
   
       echo "searchguard.disabled: $SG_DISABLED" >> $ES_CONF/elasticsearch.yml
 
-	  echo "searchguard.audit.type: internal_elasticsearch" >> $ES_CONF/elasticsearch.yml
+      if [ "$SG_COMPLIANCE" != "true" ]; then
+	      echo "searchguard.audit.type: internal_elasticsearch" >> $ES_CONF/elasticsearch.yml
+	  fi
 
 	  echo "searchguard.authcz.admin_dn:">> $ES_CONF/elasticsearch.yml
 	  echo "  - CN=sgadmin" >> $ES_CONF/elasticsearch.yml
