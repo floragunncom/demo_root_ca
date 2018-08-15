@@ -230,7 +230,7 @@ fi
   echo "searchguard.ssl.http.pemkey_password: changeit" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.pemcert_filepath: CN=$SG_PUBHOST.chain.pem" >> $ES_CONF/elasticsearch.yml
   echo "searchguard.ssl.http.pemtrustedcas_filepath: chain-ca.pem" >> $ES_CONF/elasticsearch.yml
-  echo "searchguard.enable_snapshot_restore_privilege: true" >> $ES_CONF/elasticsearch.yml
+  
   
 
   if [ -d "$ES_MODULES/x-pack" ] || [ -d "$ES_PLUGINS/x-pack" ];then
@@ -243,6 +243,8 @@ fi
   fi
   
   if [ "$SG_SSLONLY" == "false" ]; then
+  
+      echo "searchguard.enable_snapshot_restore_privilege: true" >> $ES_CONF/elasticsearch.yml
   
       echo "searchguard.disabled: $SG_DISABLED" >> $ES_CONF/elasticsearch.yml
 
