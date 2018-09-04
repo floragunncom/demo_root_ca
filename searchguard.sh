@@ -2,7 +2,7 @@
 set -x
 
 post_slack() {
-   curl -X POST --data-urlencode 'payload={"channel": "#aws_notify", "username": "awsbot", "text": "'"$1"'", "icon_emoji": ":cyclone:"}' $SLACKURL > /dev/null 2>&1
+   curl -Ss -X POST --data-urlencode 'payload={"channel": "#aws_notify", "username": "awsbot", "text": "'"$1"'", "icon_emoji": ":cyclone:"}' $SLACKURL > /dev/null 2>&1
 }
 
 do_install() {
@@ -338,14 +338,14 @@ fi
      post_slack "SG $SG_VERSION initialized on https://$SG_PUBHOST:9200"
   
   
-	  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter/tweet/1?pretty" -H'Content-Type: application/json' -d'
+	  curl -Ss -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter/tweet/1?pretty" -H'Content-Type: application/json' -d'
 	  {
 		"user" : "searchguard",
 		"post_date" : "2013-11-15T14:12:12",
 		"message" : "rockn roll"
 	  }'
 
-	  curl -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter1/tweet/1?pretty" -H'Content-Type: application/json' -d'
+	  curl -Ss -XPUT -k -u admin:admin "https://$SG_PUBHOST:9200/twitter1/tweet/1?pretty" -H'Content-Type: application/json' -d'
 	  {
 		"user" : "searchguard1",
 		"post_date" : "2015-11-15T14:12:12",
@@ -353,7 +353,7 @@ fi
 	  }'
 	  
 	  #register s3 snapshot repo
-	  curl -XPUT -k -u admin:admin  "https://$SG_PUBHOST:9200/_snapshot/mys3reposg" -H 'Content-Type: application/json' -d'
+	  curl -Ss -XPUT -k -u admin:admin  "https://$SG_PUBHOST:9200/_snapshot/mys3reposg" -H 'Content-Type: application/json' -d'
 		{
 		  "type": "s3",
 		  "settings": {
@@ -361,21 +361,25 @@ fi
 		  }
 		}'
 		
-	  curl -XPOST -k -u admin:admin "https://$SG_PUBHOST:9200/_snapshot/mys3reposg/snapshot_2/_restore"
+	  curl -Ss -XPOST -k -u admin:admin "https://$SG_PUBHOST:9200/_snapshot/mys3reposg/snapshot_2/_restore"
 
   
   fi
   
   echo "https://$SG_PUBHOST:9200" > /url.txt
   
+  set -e
+  
   cd "$DIR"
-  git clone git@github.com:floragunncom/search-guard-performance-netty-client.git
-  git checkout experimental
+  GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:floragunncom/search-guard-performance-netty-client.git
   cd search-guard-performance-netty-client
+  git checkout experimental
   
   echo "Waiting for the cluster to be ready ..."
   curl  -Ss -k -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?wait_for_nodes=3&wait_for_status=green&wait_for_no_initializing_shards=true&timeout=1200s"  
   echo "Cluster ready: $?"
+  
+  post_slack "Cluster fully initialized"
   
   curl -k -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health" -Ss
   curl -k -u admin:admin "https://$SG_PUBHOST:9200/_cat/indices?v" -Ss
@@ -387,9 +391,10 @@ fi
   echo "pubhost: $SG_PUBHOST"
   cat /url.txt
   
+  post_slack "Start perf tests on $masterip"
+  
   if [ "$masterip" == "$SG_PUBHOST" ];then
-     ./run_standard_scenario.sh "$(cat /url.txt)" > perf.log 2>&1
-     tar -czvf csv* csv.tar.gz
+     ./run_standard_scenario.sh "$(cat /url.txt)" > perf.log 2>&1 &
   fi
 
 
