@@ -366,29 +366,33 @@ fi
   
   fi
   
-  echo -n "https://$SG_PUBHOST:9200" > /url.txt
+  echo "https://$SG_PUBHOST:9200" > /url.txt
   
-  #cd "$DIR"
-  #git clone git@github.com:floragunncom/search-guard-performance-netty-client.git
-  #git checkout experimental
-  #cd search-guard-performance-netty-client
+  cd "$DIR"
+  git clone git@github.com:floragunncom/search-guard-performance-netty-client.git
+  git checkout experimental
+  cd search-guard-performance-netty-client
   
   echo "Waiting for the cluster to be ready ..."
-  curl  -Ss -k -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?wait_for_nodes=3&wait_for_status=green&wait_for_no_initializing_shards=true&wait_for_active_shards=all&timeout=1200s"  
+  curl  -Ss -k -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health?wait_for_nodes=3&wait_for_status=green&wait_for_no_initializing_shards=true&timeout=1200s"  
   echo "Cluster ready: $?"
   
   curl -k -u admin:admin "https://$SG_PUBHOST:9200/_cluster/health" -Ss
   curl -k -u admin:admin "https://$SG_PUBHOST:9200/_cat/indices?v" -Ss
   curl -k -u admin:admin "https://$SG_PUBHOST:9200/_cat/master" -Ss
 
-  masterip=$(curl -k -u admin:admin "https://$SG_PUBHOST:9200/_cat/master" -Ss | awk '{ print $3 }')
+  masterip=$(curl -k -u admin:admin "https://$SG_PUBHOST:9200/_cat/master" -Ss | awk '{ print $2 }')
   
   echo "masterip: $masterip"
   echo "pubhost: $SG_PUBHOST"
   cat /url.txt
+  
+  if [ "$masterip" == "$SG_PUBHOST" ];then
+     ./run_standard_scenario.sh "$(cat /url.txt)" > perf.log 2>&1
+     tar -czvf csv* csv.tar.gz
+  fi
 
-  #./run_standard_scenario.sh "$(cat /url.txt)" > perf.log 2>&1
-  #tar -czvf csv* csv.tar.gz
+
   
   dolog "Finished"
 }
