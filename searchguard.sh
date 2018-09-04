@@ -360,8 +360,10 @@ fi
 			"bucket": "sgperftest"
 		  }
 		}'
-		
-	  curl -Ss -XPOST -k -u admin:admin "https://$SG_PUBHOST:9200/_snapshot/mys3reposg/snapshot_2/_restore"
+	  
+	  if [ "$SG_RESTORE_PERFTEST_INDEX" == "true" ];then
+	      curl -Ss -XPOST -k -u admin:admin "https://$SG_PUBHOST:9200/_snapshot/mys3reposg/snapshot_2/_restore"
+	  fi
 
   
   fi
