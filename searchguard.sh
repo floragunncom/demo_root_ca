@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+#set -x
 
 post_slack() {
    curl -Ss -X POST --data-urlencode 'payload={"channel": "#aws_notify", "username": "awsbot", "text": "'"$1"'", "icon_emoji": ":cyclone:"}' $SLACKURL > /dev/null 2>&1
@@ -9,6 +9,9 @@ do_install() {
 
   mkfs -t ext4 -V /dev/xvdb
   mount -a
+  
+  touch /tf.tok
+  cat /tf.tok | openssl dgst -sha256
   
   export REGION=$(wget -qO- http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//' | tr -d '"')
   export INSTANCE_ID="$(curl -s http://169.254.169.254/latest/meta-data/instance-id)"
