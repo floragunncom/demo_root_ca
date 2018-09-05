@@ -396,9 +396,10 @@ fi
   echo "pubhost: $SG_PUBHOST"
   cat /url.txt
   
-  post_slack "Start perf tests on $masterip"
+  
   
   if [ "$masterip" == "$SG_PUBHOST" ] && [ "$SG_RUN_PERFTEST" == "true" ];then
+     post_slack "Start perf tests on $masterip"
      ./run_standard_scenario.sh "$(cat /url.txt)" > perf.log 2>&1 &
   fi
 
