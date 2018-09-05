@@ -267,7 +267,7 @@ sg_comp_sgperftest1:
   cluster:
     - UNLIMITED
   indices:
-    'sgperftest':
+    'sgperf*':
       '*':
         - '*'
       _masked_fields_:
@@ -282,7 +282,7 @@ sg_dls_sgperftest1_type1:
   cluster:
     - UNLIMITED
   indices:
-    'sgperftest':
+    'sgperf*':
       '*':
         - '*'
       _fls_:
@@ -293,7 +293,7 @@ sg_fls_sgperftest1_type1:
   cluster:
     - UNLIMITED
   indices:
-    'sgperftest':
+    'sgperf*':
       '*':
         - '*'
       _fls_:
@@ -304,7 +304,7 @@ sg_dls_sgperftest1_range:
   cluster:
     - UNLIMITED
   indices:
-    'sgperftest':
+    'sgperf*':
       '*':
         - '*'
       _fls_:
