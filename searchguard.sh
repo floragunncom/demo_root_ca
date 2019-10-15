@@ -238,7 +238,7 @@ fi
   
   
 
-  if [ -d "$ES_MODULES/x-pack" ] || [ -d "$ES_PLUGINS/x-pack" ];then
+  if [ -d "$ES_MODULES/x-pack" ] || [ -d "$ES_PLUGINS/x-pack" ] || [ -d "$ES_MODULES/x-pack-security" ] || [ -d "$ES_PLUGINS/x-pack-security" ];then
 	    echo "xpack.security.enabled: false" >> $ES_CONF/elasticsearch.yml
   fi
 
