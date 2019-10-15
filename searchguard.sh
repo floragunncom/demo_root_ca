@@ -2,7 +2,7 @@
 #set -x
 
 post_slack() {
-   curl -Ss -X POST --data-urlencode 'payload={"channel": "#aws_notify", "username": "awsbot", "text": "'"$1"'", "icon_emoji": ":cyclone:"}' $SLACKURL > /dev/null 2>&1
+   curl -Ss -X POST --data-urlencode 'payload={"username": "awsbot", "text": "'"$1"'", "icon_emoji": ":cyclone:"}' $SLACKURL > /dev/null 2>&1
 }
 
 do_install() {
