@@ -376,7 +376,7 @@ fi
   set -e
   
   cd "$DIR"
-  GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:floragunncom/search-guard-performance-netty-client.git
+  GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:floragunn/search-guard-performance-netty-client.git
   cd search-guard-performance-netty-client
   git checkout experimental
   
