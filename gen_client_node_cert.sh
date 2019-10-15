@@ -43,7 +43,7 @@ fi
 echo "Create cert key"
 openssl ecparam -name secp384r1 -genkey | openssl ec -aes-256-cbc -out $FILENAME.key.tmp -passout "pass:$KEY_PASS"
 #echo "topk8"
-openssl pkcs8 -topk8 -inform pem -in $FILENAME.key.tmp -outform pem -out $FILENAME.key -passout "pass:$KEY_PASS" -passin "pass:$KEY_PASS"
+openssl pkcs8 -topk8 -inform pem -in $FILENAME.key.tmp -outform pem -out $FILENAME.key -passout "pass:$KEY_PASS" -passin "pass:$KEY_PASS" -v1 PBE-SHA1-3DES
 #rm -rf $FILENAME.key.tmp
 
 echo "Create a client certificate signing request (CSR)"
