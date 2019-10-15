@@ -20,7 +20,7 @@ do_install() {
   
   if [ -z "$STACKNAME" ];then
   	dolog "empty STACKNAME $STACKNAME"
-  	exit -1
+  	#exit -1
   fi
   
   export SG_PUBHOST=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
@@ -433,15 +433,17 @@ check_prerequisites() {
   fi
   
   
-  ########## start Oracle 8 Java 
+  ########## start openjdk 11 Java 
   apt-get -yqq update > /dev/null 2>&1
   apt-get -y remove openjdk-7-jdk openjdk-7-jre openjdk-7-jre-headless || true
-  echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections > /dev/null 2>&1
+  apt-get -y remove openjdk-8-jdk openjdk-8-jre openjdk-8-jre-headless || true
+  #echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections > /dev/null 2>&1
   apt-get -yqq install software-properties-common > /dev/null 2>&1
-  add-apt-repository -y ppa:webupd8team/java > /dev/null 2>&1
+  #add-apt-repository -y ppa:webupd8team/java > /dev/null 2>&1
   apt-get -yqq update > /dev/null 2>&1
-  apt-get -yqq install oracle-java8-installer oracle-java8-unlimited-jce-policy > /dev/null 2>&1
-  ########## end Oracle 8 Java
+  #apt-get -yqq install oracle-java8-installer oracle-java8-unlimited-jce-policy > /dev/null 2>&1
+  apt-get -yqq install openjdk-11-jdk
+  ########## end Java
 
   apt-get -yqq install ntp ntpdate haveged libssl-dev autoconf libtool build-essential libffi6 libffi-dev wget openssl libapr1 iputils-ping dnsutils host netcat telnet > /dev/null 2>&1
   apt-get -yqq install unzip curl git jq apt-transport-https
